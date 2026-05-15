@@ -16,7 +16,7 @@ Diese Datei wird von Claude Code automatisch bei jedem Session-Start gelesen.
 
 ## Projekt-Kontext
 
-**Repo:** `~/dev/VoiceFlow-swift/` (Swift-Migration, Branch `swift-migration`)
+**Repo:** `~/dev/VoiceFlow-swift/` (Swift-Migration, aktive Arbeit auf `swift-migration-pr`)
 **Python-Original:** `~/dev/VoiceFlow/` — Referenz für Logik und Verhalten, nicht für Code
 
 VoiceFlow ist eine lokale macOS Menubar-App für Push-to-Talk Sprache-zu-Text.
@@ -28,13 +28,14 @@ Migration von Python/C-Launcher auf Swift + WhisperKit.
 
 ```bash
 # Bauen
-xcodebuild -scheme VoiceFlow -destination 'platform=macOS' build
+xcodebuild build -project VoiceFlow/VoiceFlow.xcodeproj -scheme VoiceFlow -configuration Debug
 
 # Tests
-xcodebuild test -scheme VoiceFlow -destination 'platform=macOS'
+xcodebuild test -project VoiceFlow/VoiceFlow.xcodeproj -scheme VoiceFlow -destination 'platform=macOS'
 ```
 
 Xcode-Projekt liegt unter `VoiceFlow/VoiceFlow.xcodeproj`.
+Aktuell existiert noch kein XCTest-Target.
 
 ## Projekt-Konventionen
 
@@ -64,13 +65,24 @@ Xcode-Projekt liegt unter `VoiceFlow/VoiceFlow.xcodeproj`.
 
 ## Aktueller Migrationsstand
 
-**Phase 1 (Foundation):** Teilweise abgeschlossen
+**Phase 1 (Foundation):** Abgeschlossen
 - ✅ Xcode-Projekt & Ordnerstruktur
 - ✅ AppSettings (Settings/AppSettings.swift)
 - ✅ WordLogger (Logging/WordLogger.swift)
 - ✅ LatencyTrace (Logging/LatencyTrace.swift)
-- 🔲 AppDelegate minimal (kein Dock-Icon, kein Fenster)
+- ✅ AppDelegate minimal (kein Dock-Icon, kein Fenster)
+- ✅ Phase 1 Done-Kriterium: `xcodebuild build` kompiliert
 - 🔲 XCTest-Infrastruktur
-- 🔲 Phase 1 Done-Kriterium: `xcodebuild build` kompiliert ohne Warnings
 
-**Phase 2–7:** Noch nicht begonnen (alle Dateien sind Stubs)
+**Phase 2 (Audio & Hotkey):** Implementiert, manuell zu verifizieren
+- ✅ AudioRecorder mit AVAudioEngine, 16-kHz-Float-Ausgabe und RMS
+- ✅ HotkeyManager mit CGEventTap und Polling-Fallback
+- ✅ OverlayLevelMapper
+
+**Phase 3 (WhisperKit):** Implementiert, Modell-/Audio-End-to-End-Test steht noch aus
+- ✅ ModelManager mit Cache-Prüfung und Modellnamen-Mapping
+- ✅ ModelDownloader für WhisperKit und HuggingFace-Downloads
+- ✅ Transcriber mit WhisperKit, Warmup, Retry und Halluzinationsfilter
+- ✅ VocabLearner mit `~/.voiceflow/vocab_cache.json`
+
+**Phase 4–7:** Noch offen

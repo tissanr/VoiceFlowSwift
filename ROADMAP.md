@@ -1,6 +1,6 @@
 # VoiceFlow – Roadmap & Entwicklungsdokumentation
 
-> **Letzte Aktualisierung:** 2026-05-12 (Homebrew-Distribution vorbereitet)
+> **Letzte Aktualisierung:** 2026-05-15 (Swift Phase 2/3 implementiert)
 > **Maintainer:** Eduard Munt
 > **Zweck:** Nachvollziehbare Entwicklungsgeschichte, aktueller Stand, offene Punkte
 
@@ -13,6 +13,16 @@ Keine Cloud, keine Subscription — alles läuft lokal auf Apple Silicon.
 
 **Hotkey:** `Fn + Shift` (halten zum Aufnehmen, loslassen zum Transkribieren)
 **Starten:** `python main.py`
+
+### Swift-Migration aktueller Stand
+
+Die aktive Swift-Migration liegt im Xcode-Projekt `VoiceFlow/VoiceFlow.xcodeproj`.
+Der aktuelle Implementierungszweig ist `swift-migration-pr`; `main` kann zeitweise hinterherhinken.
+
+- Phase 1: Foundation, Settings, Logging und App-Skeleton implementiert.
+- Phase 2: `AudioRecorder`, `HotkeyManager` und `OverlayLevelMapper` implementiert.
+- Phase 3: WhisperKit-Transcriber, Modell-Cache/-Download und `VocabLearner` implementiert.
+- Noch offen: echter Mikrofon-zu-Whisper-End-to-End-Test, XCTest-Target, Phase 4–7.
 
 ### Tech-Stack
 

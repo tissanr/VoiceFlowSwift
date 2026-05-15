@@ -8,11 +8,11 @@ typealias AudioSamples = [Float]
 // AVAudioEngine wird beim App-Start warm gehalten; nur der Tap wird ein-/ausgeschaltet.
 actor AudioRecorder {
     private let engine = AVAudioEngine()
+    private let captureState = AudioCaptureState()
     private var converter: AVAudioConverter?
-    private var buffer: AudioSamples = []
     private var isRecording = false
 
-    private(set) var currentRMS: Float = 0.0
+    var currentRMS: Float { captureState.currentRMS }
 
     // Sample-Rate und Format erwartet von WhisperKit
     private static let targetFormat = AVAudioFormat(
@@ -53,11 +53,16 @@ actor AudioRecorder {
         let inputFormat = inputNode.outputFormat(forBus: 0)
         let targetFormat = Self.targetFormat
 
-        buffer = []
-        buffer.reserveCapacity(16_000 * 120)  // 2 Minuten max
+        captureState.reset(reservingCapacity: 16_000 * 120)
+        let converter = converter
 
         inputNode.installTap(onBus: 0, bufferSize: 4096, format: inputFormat) { [weak self] pcmBuffer, _ in
-            Task { await self?.accumulate(pcmBuffer, inputFormat: inputFormat, targetFormat: targetFormat) }
+            self?.captureState.accumulate(
+                pcmBuffer,
+                inputFormat: inputFormat,
+                targetFormat: targetFormat,
+                converter: converter
+            )
         }
 
         if !engine.isRunning {
@@ -70,47 +75,7 @@ actor AudioRecorder {
         guard isRecording else { return [] }
         engine.inputNode.removeTap(onBus: 0)
         isRecording = false
-        return buffer
-    }
-
-    // MARK: - Internal
-
-    private func accumulate(
-        _ inputBuffer: AVAudioPCMBuffer,
-        inputFormat: AVAudioFormat,
-        targetFormat: AVAudioFormat
-    ) {
-        let converted: AVAudioPCMBuffer
-
-        if let conv = converter {
-            let frameCapacity = AVAudioFrameCount(
-                Double(inputBuffer.frameLength) * targetFormat.sampleRate / inputFormat.sampleRate + 1
-            )
-            guard let outBuf = AVAudioPCMBuffer(pcmFormat: targetFormat, frameCapacity: frameCapacity) else { return }
-            var error: NSError?
-            var inputConsumed = false
-            conv.convert(to: outBuf, error: &error) { _, outStatus in
-                if inputConsumed {
-                    outStatus.pointee = .noDataNow
-                    return nil
-                }
-                inputConsumed = true
-                outStatus.pointee = .haveData
-                return inputBuffer
-            }
-            guard error == nil else { return }
-            converted = outBuf
-        } else {
-            converted = inputBuffer
-        }
-
-        guard let channelData = converted.floatChannelData?[0] else { return }
-        let count = Int(converted.frameLength)
-        buffer.append(contentsOf: UnsafeBufferPointer(start: channelData, count: count))
-
-        var rms: Float = 0
-        vDSP_rmsqv(channelData, 1, &rms, vDSP_Length(count))
-        currentRMS = rms
+        return captureState.samples()
     }
 
     // MARK: - Device selection
@@ -141,6 +106,74 @@ actor AudioRecorder {
         if !granted {
             throw AudioRecorderError.microphoneAccessDenied
         }
+    }
+}
+
+private final class AudioCaptureState: @unchecked Sendable {
+    private let lock = NSLock()
+    private var buffer: AudioSamples = []
+    private var rms: Float = 0.0
+
+    var currentRMS: Float {
+        lock.lock()
+        defer { lock.unlock() }
+        return rms
+    }
+
+    func reset(reservingCapacity capacity: Int) {
+        lock.lock()
+        buffer = []
+        buffer.reserveCapacity(capacity)
+        rms = 0.0
+        lock.unlock()
+    }
+
+    func samples() -> AudioSamples {
+        lock.lock()
+        defer { lock.unlock() }
+        return buffer
+    }
+
+    func accumulate(
+        _ inputBuffer: AVAudioPCMBuffer,
+        inputFormat: AVAudioFormat,
+        targetFormat: AVAudioFormat,
+        converter: AVAudioConverter?
+    ) {
+        let converted: AVAudioPCMBuffer
+
+        if let converter {
+            let frameCapacity = AVAudioFrameCount(
+                Double(inputBuffer.frameLength) * targetFormat.sampleRate / inputFormat.sampleRate + 1
+            )
+            guard let outBuf = AVAudioPCMBuffer(pcmFormat: targetFormat, frameCapacity: frameCapacity) else { return }
+            var error: NSError?
+            var inputConsumed = false
+            converter.convert(to: outBuf, error: &error) { _, outStatus in
+                if inputConsumed {
+                    outStatus.pointee = .noDataNow
+                    return nil
+                }
+                inputConsumed = true
+                outStatus.pointee = .haveData
+                return inputBuffer
+            }
+            guard error == nil else { return }
+            converted = outBuf
+        } else {
+            converted = inputBuffer
+        }
+
+        guard let channelData = converted.floatChannelData?[0] else { return }
+        let count = Int(converted.frameLength)
+
+        var rms: Float = 0
+        vDSP_rmsqv(channelData, 1, &rms, vDSP_Length(count))
+
+        lock.lock()
+        buffer.append(contentsOf: UnsafeBufferPointer(start: channelData, count: count))
+        self.rms = rms
+        lock.unlock()
     }
 }
 
