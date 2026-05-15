@@ -1,10 +1,15 @@
 import Cocoa
 
-@main
 class AppDelegate: NSObject, NSApplicationDelegate {
+    private let hotkey = HotkeyManager()
+
     func applicationDidFinishLaunching(_ notification: Notification) {
+        print("✅ APP STARTED")
         NSApp.setActivationPolicy(.accessory)
-        // Phase 6: MenuBarController hier initialisieren
+
+        hotkey.onStart = { print("[HotkeyManager] ▶ recording started") }
+        hotkey.onStop  = { print("[HotkeyManager] ■ recording stopped") }
+        hotkey.start()
     }
 
     func applicationWillTerminate(_ notification: Notification) {}
