@@ -20,7 +20,10 @@ final class HotkeyManager {
 
     func start() {
         guard eventTap == nil, pollTimer == nil else { return }
-        if !createEventTap() {
+        if createEventTap() {
+            print("[HotkeyManager] CGEventTap created — listening for Fn+Shift")
+        } else {
+            print("[HotkeyManager] CGEventTap failed — falling back to polling")
             startPollingFallback()
         }
     }
@@ -41,9 +44,7 @@ final class HotkeyManager {
     // MARK: - CGEventTap
 
     private func createEventTap() -> Bool {
-        let mask: CGEventMask = (1 << CGEventType.flagsChanged.rawValue)
-            | (1 << CGEventType.keyDown.rawValue)
-            | (1 << CGEventType.keyUp.rawValue)
+        let mask: CGEventMask = 1 << CGEventType.flagsChanged.rawValue
 
         guard let tap = CGEvent.tapCreate(
             tap: .cghidEventTap,
@@ -83,21 +84,12 @@ final class HotkeyManager {
         // Fn-Bit 0x800000 ist undokumentiert (NX_DEVICELFNKEYMASK); auf Sequoia verifiziert.
         let fnBit = CGEventFlags(rawValue: 0x0080_0000)
 
-        switch type {
-        case .flagsChanged:
-            fnDown = flags.contains(fnBit)
-            let keycode = event.getIntegerValueField(.keyboardEventKeycode)
-            if keycode == 56 || keycode == 60 {
-                shiftDown = flags.contains(.maskShift)
-            }
-        case .keyDown:
-            let keycode = event.getIntegerValueField(.keyboardEventKeycode)
-            if keycode == 56 || keycode == 60 { shiftDown = true }
-        case .keyUp:
-            let keycode = event.getIntegerValueField(.keyboardEventKeycode)
-            if keycode == 56 || keycode == 60 { shiftDown = false }
-        default:
-            break
+        if type == .flagsChanged {
+            let newFn = flags.contains(fnBit)
+            let newShift = flags.contains(.maskShift)
+            print("[HotkeyManager] flagsChanged raw=0x\(String(flags.rawValue, radix: 16)) fn=\(newFn) shift=\(newShift)")
+            fnDown = newFn
+            shiftDown = newShift
         }
 
         updateRecordingState()
