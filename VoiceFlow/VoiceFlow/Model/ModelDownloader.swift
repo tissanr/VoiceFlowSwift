@@ -70,29 +70,16 @@ actor ModelDownloader {
             withIntermediateDirectories: true
         )
 
-        let (bytes, response) = try await URLSession.shared.bytes(from: url)
+        let (tempURL, response) = try await URLSession.shared.download(from: url)
         try validate(response: response)
 
         if FileManager.default.fileExists(atPath: destination.path) {
             try FileManager.default.removeItem(at: destination)
         }
-        FileManager.default.createFile(atPath: destination.path, contents: nil)
-        let handle = try FileHandle(forWritingTo: destination)
-        defer { try? handle.close() }
+        try FileManager.default.moveItem(at: tempURL, to: destination)
 
-        var chunk = Data()
-        chunk.reserveCapacity(64 * 1024)
-        for try await byte in bytes {
-            chunk.append(byte)
-            if chunk.count >= 64 * 1024 {
-                try handle.write(contentsOf: chunk)
-                await counter.add(Int64(chunk.count))
-                chunk.removeAll(keepingCapacity: true)
-            }
-        }
-        if !chunk.isEmpty {
-            try handle.write(contentsOf: chunk)
-            await counter.add(Int64(chunk.count))
+        if let fileSize = try? destination.resourceValues(forKeys: [.fileSizeKey]).fileSize {
+            await counter.add(Int64(fileSize))
         }
     }
 

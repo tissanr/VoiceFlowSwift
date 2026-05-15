@@ -188,7 +188,7 @@ private extension Transcriber {
         if inputRMS < silenceThreshold { return true }
         if normalized.rangeOfCharacter(from: .alphanumerics) == nil { return true }
         if isBlacklisted(normalized) { return true }
-        if hasTooManyNonASCIILetters(normalized) { return true }
+        if hasTooManyNonLatinLetters(normalized) { return true }
         if hasWordRepetition(normalized) { return true }
         if let avgLogprob, avgLogprob < -1.1, normalized.split(whereSeparator: \.isWhitespace).count <= 3 {
             return true
@@ -201,21 +201,38 @@ private extension Transcriber {
             .lowercased()
             .trimmingCharacters(in: CharacterSet.whitespacesAndNewlines.union(.punctuationCharacters))
         let phrases: Set<String> = [
+            // Englische Whisper-Halluzinationen
             "thank you",
             "thanks",
             "thanks for watching",
             "thank you for watching",
             "subscribe",
-            "like and subscribe"
+            "like and subscribe",
+            // Deutsche Whisper-Halluzinationen
+            "danke",
+            "danke schon",
+            "danke schön",
+            "vielen dank",
+            "vielen dank fur ihre aufmerksamkeit",
+            "vielen dank für ihre aufmerksamkeit",
+            "danke furs zuschauen",
+            "danke fürs zuschauen",
+            "untertitel von stephanie wolf",
+            "untertitel von der deutschen hörfilm gmbh",
+            "untertitelung im auftrag des zdf"
         ]
         return phrases.contains(lowered)
     }
 
-    static func hasTooManyNonASCIILetters(_ text: String) -> Bool {
+    // Filtert Texte, bei denen mehr als 50 % der Buchstaben außerhalb des
+    // Latin-Extended-Bereichs (U+0000–U+024F) liegen.  Das deckt alle
+    // europäischen Diakritika (ä, ö, ü, ß …) ab und schließt trotzdem
+    // CJK-, Arabisch- und andere Nicht-Latein-Schriften aus.
+    static func hasTooManyNonLatinLetters(_ text: String) -> Bool {
         let letters = text.unicodeScalars.filter { CharacterSet.letters.contains($0) }
         guard !letters.isEmpty else { return false }
-        let nonASCII = letters.filter { !$0.isASCII }
-        return Double(nonASCII.count) / Double(letters.count) > 0.5
+        let nonLatin = letters.filter { $0.value > 0x024F }
+        return Double(nonLatin.count) / Double(letters.count) > 0.5
     }
 
     static func hasWordRepetition(_ text: String) -> Bool {

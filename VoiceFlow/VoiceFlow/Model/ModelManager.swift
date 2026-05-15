@@ -21,10 +21,11 @@ enum ModelManager {
         }
     }
 
-    /// Prüft ob das Modell lokal gecacht ist (mind. eine *.mlmodelc oder *.bin-Datei > 1 MB).
+    /// Prüft ob das Modell lokal gecacht ist.
+    /// Als Nachweis genügt ein *.mlmodelc-Verzeichnis oder eine *.bin-Datei > 1 MB
+    /// im Repo-Cache-Ordner des Whisper-Repos.
     static func isCached(modelName: String) -> Bool {
-        let variant = whisperVariant(for: modelName)
-        let root = cachePath(for: variant)
+        let root = whisperRepoCacheRoot
         guard let enumerator = FileManager.default.enumerator(
             at: root,
             includingPropertiesForKeys: [.isDirectoryKey, .fileSizeKey],
@@ -41,16 +42,12 @@ enum ModelManager {
             if url.pathExtension == "bin", (values?.fileSize ?? 0) > 1_000_000 {
                 return true
             }
-            if url.lastPathComponent.localizedCaseInsensitiveContains(variant),
-               values?.isDirectory == true {
-                return true
-            }
         }
         return false
     }
 
-    /// Gibt den lokalen Cache-Pfad zurück.
-    static func cachePath(for modelName: String) -> URL {
+    /// Wurzel des lokalen HuggingFace-Cache-Ordners für das Whisper-Repo.
+    static var whisperRepoCacheRoot: URL {
         let repoFolder = "models--" + whisperRepoID.replacingOccurrences(of: "/", with: "--")
         return huggingFaceCacheRoot.appendingPathComponent(repoFolder)
     }

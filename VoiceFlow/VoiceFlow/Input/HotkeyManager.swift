@@ -75,9 +75,11 @@ final class HotkeyManager {
         eventTap = tap
         runLoopSource = source
 
+        let sem = DispatchSemaphore(value: 0)
         let t = Thread {
             let runLoop = CFRunLoopGetCurrent()
-            DispatchQueue.main.async { self.tapRunLoop = runLoop }
+            self.tapRunLoop = runLoop
+            sem.signal()
             CFRunLoopAddSource(runLoop, source, .commonModes)
             CGEvent.tapEnable(tap: tap, enable: true)
             CFRunLoopRun()
@@ -85,6 +87,7 @@ final class HotkeyManager {
         t.name = "HotkeyManager.tap"
         t.qualityOfService = .userInteractive
         t.start()
+        sem.wait()
         tapThread = t
         return true
     }

@@ -8,6 +8,7 @@ actor VocabLearner {
 
     private var corrections: [String: String] = [:]
     private var keyOrder: [String] = []
+    private var regexCache: [String: NSRegularExpression] = [:]
 
     init() {
         let loaded = Self.loadFromDisk()
@@ -27,6 +28,7 @@ actor VocabLearner {
             corrections[sourceKey] = target
             keyOrder.removeAll { $0 == sourceKey }
             keyOrder.append(sourceKey)
+            regexCache.removeValue(forKey: sourceKey)
         }
 
         trimToLimit()
@@ -46,12 +48,21 @@ actor VocabLearner {
         keyOrder.compactMap { corrections[$0] }
     }
 
+    private struct CachePayload: Codable {
+        var corrections: [String: String]
+        var keyOrder: [String]
+    }
+
     private static func loadFromDisk() -> (corrections: [String: String], keyOrder: [String]) {
-        guard let data = try? Data(contentsOf: Self.cacheURL),
-              let decoded = try? JSONDecoder().decode([String: String].self, from: data) else {
-            return ([:], [])
+        guard let data = try? Data(contentsOf: Self.cacheURL) else { return ([:], []) }
+        if let payload = try? JSONDecoder().decode(CachePayload.self, from: data) {
+            return (payload.corrections, payload.keyOrder)
         }
-        return (decoded, decoded.keys.sorted())
+        // Rückwärtskompatibilität mit dem alten Format (nur Dictionary)
+        if let legacy = try? JSONDecoder().decode([String: String].self, from: data) {
+            return (legacy, legacy.keys.sorted())
+        }
+        return ([:], [])
     }
 
     private func save() {
@@ -60,7 +71,8 @@ actor VocabLearner {
                 at: Self.cacheURL.deletingLastPathComponent(),
                 withIntermediateDirectories: true
             )
-            let data = try JSONEncoder().encode(corrections)
+            let payload = CachePayload(corrections: corrections, keyOrder: keyOrder)
+            let data = try JSONEncoder().encode(payload)
             try data.write(to: Self.cacheURL, options: .atomic)
         } catch {
             print("[VocabLearner] Fehler beim Speichern: \(error)")
@@ -99,9 +111,16 @@ actor VocabLearner {
     }
 
     private func replaceWholeWord(_ source: String, with replacement: String, in text: String) -> String {
-        let pattern = "\\b" + NSRegularExpression.escapedPattern(for: source) + "\\b"
-        guard let regex = try? NSRegularExpression(pattern: pattern, options: [.caseInsensitive]) else {
-            return text
+        let regex: NSRegularExpression
+        if let cached = regexCache[source] {
+            regex = cached
+        } else {
+            let pattern = "\\b" + NSRegularExpression.escapedPattern(for: source) + "\\b"
+            guard let compiled = try? NSRegularExpression(pattern: pattern, options: [.caseInsensitive]) else {
+                return text
+            }
+            regexCache[source] = compiled
+            regex = compiled
         }
         let range = NSRange(text.startIndex..<text.endIndex, in: text)
         return regex.stringByReplacingMatches(in: text, range: range, withTemplate: replacement)
