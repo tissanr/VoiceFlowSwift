@@ -1084,17 +1084,25 @@ Migration des gesamten Stacks von Python/C-Launcher auf Swift + WhisperKit.
 
 **Phasendokumente:** [`docs/swift-migration/`](docs/swift-migration/README.md)
 
-| Phase                                              | Titel                          | Dauer  |
-| -------------------------------------------------- | ------------------------------ | ------ |
-| [1](docs/swift-migration/phase-1-foundation.md)    | Xcode-Projekt & Foundation     | 1–2 Wo |
-| [2](docs/swift-migration/phase-2-audio-input.md)   | Audio & Hotkey                 | 2–3 Wo |
-| [3](docs/swift-migration/phase-3-whisper.md)       | WhisperKit-Integration         | 3–4 Wo |
-| [4](docs/swift-migration/phase-4-llm.md)           | LLM Enhancement                | 3–4 Wo |
-| [5](docs/swift-migration/phase-5-text-delivery.md) | Text Delivery & AX API         | 3–4 Wo |
-| [6](docs/swift-migration/phase-6-ui.md)            | UI (MenuBar, Overlay, History) | 3–4 Wo |
-| [7](docs/swift-migration/phase-7-distribution.md)  | Distribution & Cleanup         | 1–2 Wo |
+| Phase                                              | Titel                          | Dauer  | Status    |
+| -------------------------------------------------- | ------------------------------ | ------ | --------- |
+| [1](docs/swift-migration/phase-1-foundation.md)    | Xcode-Projekt & Foundation     | 1–2 Wo | ✅ fertig |
+| [2](docs/swift-migration/phase-2-audio-input.md)   | Audio & Hotkey                 | 2–3 Wo | ✅ fertig |
+| [3](docs/swift-migration/phase-3-whisper.md)       | WhisperKit-Integration         | 3–4 Wo | ⏳ offen  |
+| [4](docs/swift-migration/phase-4-llm.md)           | LLM Enhancement                | 3–4 Wo | ⏳ offen  |
+| [5](docs/swift-migration/phase-5-text-delivery.md) | Text Delivery & AX API         | 3–4 Wo | ⏳ offen  |
+| [6](docs/swift-migration/phase-6-ui.md)            | UI (MenuBar, Overlay, History) | 3–4 Wo | ⏳ offen  |
+| [7](docs/swift-migration/phase-7-distribution.md)  | Distribution & Cleanup         | 1–2 Wo | ⏳ offen  |
 
 **Gesamtschätzung:** 16–23 Wochen
+
+### Phase 2 — 2026-05-15: Audio & Hotkey implementiert
+
+**Neu/geändert:**
+
+- `VoiceFlow/Input/HotkeyManager.swift` — CGEventTap für Fn+Shift (listen-only), Fn-Bit 0x800000, Callbacks auf Main-Thread; Polling-Fallback falls Input Monitoring nicht granted
+- `VoiceFlow/Audio/AudioRecorder.swift` — AVAudioEngine actor, 16 kHz/Float32, AVAudioConverter für Nicht-16kHz-Geräte, vDSP RMS; `prepare()` hält Engine warm beim App-Start
+- `VoiceFlow/UI/OverlayLevelMapper.swift` — Portierung von Python VisualLevelMapper: adaptiver Noise-Floor, Peak-Tracking, perceptual pow(0.55)-Scaling, 9 Sinus-modulierte Balken
 
 ---
 
