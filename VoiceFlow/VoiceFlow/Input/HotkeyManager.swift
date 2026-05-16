@@ -9,6 +9,7 @@ final class HotkeyManager {
 
     private var eventTap: CFMachPort?
     private var runLoopSource: CFRunLoopSource?
+    private var tapRunLoop: CFRunLoop?
     private var tapThread: Thread?
     private var pollTimer: DispatchSourceTimer?
 
@@ -30,12 +31,19 @@ final class HotkeyManager {
 
     func stop() {
         eventTap.map { CGEvent.tapEnable(tap: $0, enable: false) }
-        if let source = runLoopSource, let thread = tapThread {
-            CFRunLoopRemoveSource(CFRunLoopGetMain(), source, .commonModes)
-            _ = thread  // thread exits when RunLoop stops
+        if let tapRunLoop {
+            let source = runLoopSource
+            CFRunLoopPerformBlock(tapRunLoop, CFRunLoopMode.commonModes.rawValue) {
+                if let source {
+                    CFRunLoopRemoveSource(CFRunLoopGetCurrent(), source, .commonModes)
+                }
+                CFRunLoopStop(CFRunLoopGetCurrent())
+            }
+            CFRunLoopWakeUp(tapRunLoop)
         }
         eventTap = nil
         runLoopSource = nil
+        tapRunLoop = nil
         tapThread = nil
         pollTimer?.cancel()
         pollTimer = nil
@@ -52,10 +60,10 @@ final class HotkeyManager {
             options: .listenOnly,
             eventsOfInterest: mask,
             callback: { _, type, event, refcon -> Unmanaged<CGEvent>? in
-                guard let refcon else { return Unmanaged.passRetained(event) }
+                guard let refcon else { return Unmanaged.passUnretained(event) }
                 let manager = Unmanaged<HotkeyManager>.fromOpaque(refcon).takeUnretainedValue()
                 manager.handleEvent(type: type, event: event)
-                return Unmanaged.passRetained(event)
+                return Unmanaged.passUnretained(event)
             },
             userInfo: Unmanaged.passUnretained(self).toOpaque()
         ) else {
@@ -67,14 +75,19 @@ final class HotkeyManager {
         eventTap = tap
         runLoopSource = source
 
+        let sem = DispatchSemaphore(value: 0)
         let t = Thread {
-            CFRunLoopAddSource(CFRunLoopGetCurrent(), source, .commonModes)
+            let runLoop = CFRunLoopGetCurrent()
+            self.tapRunLoop = runLoop
+            sem.signal()
+            CFRunLoopAddSource(runLoop, source, .commonModes)
             CGEvent.tapEnable(tap: tap, enable: true)
             CFRunLoopRun()
         }
         t.name = "HotkeyManager.tap"
         t.qualityOfService = .userInteractive
         t.start()
+        sem.wait()
         tapThread = t
         return true
     }
