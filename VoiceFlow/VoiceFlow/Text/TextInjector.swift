@@ -5,7 +5,7 @@ import Quartz
 
 /// Phase 5 — Text-Injektion via CGEventPost / AX API
 final class TextInjector {
-    
+
     static func typeText(_ text: String) async -> Bool {
         guard let source = CGEventSource(stateID: .combinedSessionState) else { return false }
         for scalar in text.unicodeScalars {
@@ -24,18 +24,18 @@ final class TextInjector {
         }
         return true
     }
-    
+
     static func insertDirect(_ text: String, context: String) -> Bool {
         let systemWide = AXUIElementCreateSystemWide()
         var focusedElement: CFTypeRef?
         guard AXUIElementCopyAttributeValue(systemWide, kAXFocusedUIElementAttribute as CFString, &focusedElement) == .success,
               let focusedCF = focusedElement else { return false }
         let element = focusedCF as! AXUIElement
-        
+
         var value: CFTypeRef?
         guard AXUIElementCopyAttributeValue(element, kAXValueAttribute as CFString, &value) == .success,
               let currentText = value as? String else { return false }
-        
+
         // Split at the context boundary using UTF-16 offsets to match the AX API
         let utf16Count = context.utf16.count
         let utf16View = currentText.utf16
@@ -51,7 +51,7 @@ final class TextInjector {
         AXUIElementSetAttributeValue(element, kAXSelectedTextRangeAttribute as CFString, axRange)
         return true
     }
-    
+
     static func triggerPaste() -> Bool {
         let source = CGEventSource(stateID: .combinedSessionState)
         guard let keyDown = CGEvent(keyboardEventSource: source, virtualKey: 9, keyDown: true),
@@ -62,12 +62,12 @@ final class TextInjector {
         keyUp.post(tap: .cghidEventTap)
         return true
     }
-    
+
     @MainActor static func copyToClipboard(_ text: String) {
         NSPasteboard.general.clearContents()
         NSPasteboard.general.setString(text, forType: .string)
     }
-    
+
     // Deep-copies all item data before clearContents() invalidates the live items.
     @MainActor static func saveClipboard() -> [[NSPasteboard.PasteboardType: Data]] {
         guard let items = NSPasteboard.general.pasteboardItems else { return [] }

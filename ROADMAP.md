@@ -26,7 +26,6 @@ Der aktuelle Implementierungszweig ist `swift-migration-pr`; `main` kann zeitwei
 - Phase 6: `MenuBarController`, `OverlayWindow`, `HistoryWindow` und `PipelineCoordinator` implementiert.
 - Noch offen: echter Mikrofon-zu-Whisper-End-to-End-Test, XCTest-Target, Phase 7.
 
-
 ### Tech-Stack
 
 | Komponente          | Technologie                           |

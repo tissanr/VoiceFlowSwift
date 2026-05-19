@@ -97,4 +97,3 @@ Aktuell existiert noch kein XCTest-Target.
 - ✅ HistoryWindow (Verlauf & Analytik)
 
 **Phase 7:** Noch offen
-

@@ -13,7 +13,7 @@ struct TextSpacing {
         if let firstChar = text.first, firstChar.isWhitespace { return text }
         return " " + text
     }
-    
+
     static func capitalize(text: String, shouldCapitalize: Bool) -> String {
         guard shouldCapitalize, !text.isEmpty else { return text }
         var chars = Array(text)
@@ -30,14 +30,14 @@ struct TextSpacing {
 final class TextDelivery {
     private static let terminalBundles: Set<String> = ["com.apple.Terminal", "com.googlecode.iterm2", "com.github.wez.wezterm", "net.kovidgoyal.kitty", "co.zeit.hyper", "io.alacritty"]
     private static let browserBundles: Set<String> = ["com.google.Chrome", "org.mozilla.firefox", "com.apple.Safari", "com.microsoft.edgemac", "com.microsoft.VSCode", "com.github.Electron"]
-    
+
     static func deliver(text: String, context: String?, outputMode: TextOutputMode = .automatic) async -> DeliveryResult {
         var processedText = TextNormalizer.normalize(text)
         processedText = PostProcessor.process(processedText)
         let shouldCap = CursorContext.shouldCapitalize(context: context)
         processedText = TextSpacing.capitalize(text: processedText, shouldCapitalize: shouldCap)
         processedText = TextSpacing.addLeadingSpace(text: processedText, context: context)
-        
+
         let bundleID = NSWorkspace.shared.frontmostApplication?.bundleIdentifier ?? ""
         switch outputMode {
         case .typing: return await TextInjector.typeText(processedText) ? .success : .failure("Typing failed")
@@ -53,7 +53,7 @@ final class TextDelivery {
             await TextInjector.copyToClipboard(processedText); return .success
         }
     }
-    
+
     private static func pasteDelivery(_ text: String) async -> DeliveryResult {
         let saved = await TextInjector.saveClipboard()
         await TextInjector.copyToClipboard(text)
