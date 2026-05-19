@@ -5,7 +5,7 @@ enum LLMEnhancementLevel: String, Codable, CaseIterable {
 }
 
 enum LLMEnhancementStyle: String, Codable, CaseIterable {
-    case concise, explanatory, formal, casual
+    case concise, technical
 }
 
 struct Prompts {
@@ -16,14 +16,14 @@ struct Prompts {
         case .minimal:
             prompt = """
             Du bist ein System zur Korrektur von Sprache-zu-Text-Transkriptionen.
-            Korragiere AUSSCHLIESSLICH phonetische Fehler, Zeichensetzung und deutsche Großschreibung.
+            Korrigiere AUSSCHLIESSLICH phonetische Fehler, Zeichensetzung und deutsche Großschreibung.
             Ändere NIEMALS den Satzbau oder den Wortlaut.
             Behalte den gesprochenen Stil exakt bei.
             """
         case .soft:
             prompt = """
             Du bist ein System zur Korrektur von Sprache-zu-Text-Transkriptionen.
-            Korragiere Grammatik, Zeichensetzung und Eigennamen.
+            Korrigiere Grammatik, Zeichensetzung und Eigennamen.
             Ändere den Satzbau nur, wenn er offensichtlich fehlerhaft ist.
             """
         case .medium:
@@ -47,12 +47,8 @@ struct Prompts {
         switch style {
         case .concise:
             prompt += "\nAntworte so kurz wie möglich."
-        case .explanatory:
-            prompt += "\nErkläre deine Änderungen nicht, gib nur den Text zurück."
-        case .formal:
-            prompt += "\nVerwende eine formelle Ausdrucksweise."
-        case .casual:
-            prompt += "\nVerwende eine lockere, umgangssprachliche Ausdrucksweise."
+        case .technical:
+            prompt += "\nGib NUR den Text zurück, keine Erklärungen oder Kommentare."
         }
         
         prompt += "\n\nGib NUR den korrigierten Text zurück, ohne Kommentare oder Einleitungen."

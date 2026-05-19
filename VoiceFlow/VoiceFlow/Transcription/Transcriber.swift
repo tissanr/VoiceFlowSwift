@@ -94,7 +94,7 @@ actor Transcriber {
         let results = try await kit.transcribe(audioArray: audio, decodeOptions: options)
         let rawText = results.map(\.text).joined(separator: " ").trimmingCharacters(in: .whitespacesAndNewlines)
         
-        // Phase 4: Textnormalisierung & Repetitionsfilter
+        // Textnormalisierung & Repetitionsfilter laufen immer, unabhängig vom LLM-Enhancement.
         let normalizedText = TextNormalizer.normalize(rawText)
         let text = TextNormalizer.filterRepetitions(normalizedText)
         

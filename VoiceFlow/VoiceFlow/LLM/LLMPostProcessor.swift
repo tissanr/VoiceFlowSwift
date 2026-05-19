@@ -20,13 +20,16 @@ actor LLMPostProcessor {
             switch settings.llmRuntime {
             case .ollama:
                 let model = settings.ollamaModel.isEmpty ? "phi4-mini" : settings.ollamaModel
+                let chatURL = URL(string: settings.ollamaBaseURL + "/api/chat")
+                    ?? URL(string: "http://localhost:11434/api/chat")!
                 result = try await ollamaProcessor.process(
                     text: text,
                     model: model,
                     level: mapLevel(settings.enhancementLevel),
                     style: mapStyle(settings.enhancementStyle),
                     capitalize: capitalize,
-                    vocabulary: vocabulary
+                    vocabulary: vocabulary,
+                    baseURL: chatURL
                 )
             case .mlx:
                 // TODO: mlx implementation
@@ -53,18 +56,17 @@ actor LLMPostProcessor {
     
     private func mapLevel(_ level: EnhancementLevel) -> LLMEnhancementLevel {
         switch level {
-        case .none: return .minimal
-        case .minimal: return .minimal
+        case .none, .minimal: return .minimal
         case .soft: return .soft
         case .medium: return .medium
         case .high: return .high
         }
     }
-    
+
     private func mapStyle(_ style: EnhancementStyle) -> LLMEnhancementStyle {
         switch style {
         case .standard: return .concise
-        case .developer: return .explanatory
+        case .developer: return .technical
         }
     }
     
@@ -72,8 +74,8 @@ actor LLMPostProcessor {
         guard !output.isEmpty else { return false }
         
         // 1. Wortanzahl: max ±2 Wörter Abweichung oder 20%
-        let inputWords = input.split(separator: " ").count
-        let outputWords = output.split(separator: " ").count
+        let inputWords = input.components(separatedBy: .whitespaces).filter { !$0.isEmpty }.count
+        let outputWords = output.components(separatedBy: .whitespaces).filter { !$0.isEmpty }.count
         let diff = abs(inputWords - outputWords)
         let allowedDiff = max(2, Int(Double(inputWords) * 0.2))
         
