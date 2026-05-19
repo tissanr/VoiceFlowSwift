@@ -40,7 +40,13 @@ final class MenuBarController: NSObject {
     
     private func buildMenu() {
         let menu = NSMenu()
-        
+
+        // 0. Hotkey hint
+        let hotkeyItem = NSMenuItem(title: "Aufnahme: Fn+Shift", action: nil, keyEquivalent: "")
+        hotkeyItem.isEnabled = false
+        menu.addItem(hotkeyItem)
+        menu.addItem(NSMenuItem.separator())
+
         // 1. Verlauf
         menu.addItem(withTitle: "Verlauf...", action: #selector(historyClicked), keyEquivalent: "y").target = self
         menu.addItem(NSMenuItem.separator())

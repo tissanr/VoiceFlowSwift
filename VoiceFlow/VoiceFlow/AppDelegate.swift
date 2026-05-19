@@ -70,6 +70,12 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
                 case .error(let msg):
                     print("ERROR: \(msg)")
                     self?.showOverlay(true)
+                    Task { @MainActor [weak self] in
+                        try? await Task.sleep(for: .seconds(3))
+                        if case .error = self?.state.status ?? .idle {
+                            self?.state.status = .idle
+                        }
+                    }
                 }
             }
             .store(in: &state.cancellables)
