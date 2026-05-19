@@ -10,14 +10,27 @@ enum ModelManager {
             .appendingPathComponent(".cache/huggingface/hub")
     }
 
+    /// Gibt den vollständigen HuggingFace-Modellnamen zurück, den WhisperKit erwartet.
+    /// Kurz-Aliase (z. B. "large-v3-turbo") werden auf den kanonischen Ordnernamen
+    /// im argmaxinc/whisperkit-coreml-Repo abgebildet.
     static func whisperVariant(for modelName: String) -> String {
         switch modelName.trimmingCharacters(in: .whitespacesAndNewlines) {
-        case "", "large-turbo":
-            return defaultWhisperVariant
-        case "tiny", "base", "small", "medium", "large-v3", "large-v3-turbo":
-            return modelName
+        case "", "large-turbo", "large-v3-turbo":
+            return "openai_whisper-large-v3-turbo"
+        case "large-v3":
+            return "openai_whisper-large-v3"
+        case "medium":
+            return "openai_whisper-medium"
+        case "small":
+            return "openai_whisper-small"
+        case "base":
+            return "openai_whisper-base"
+        case "tiny":
+            return "openai_whisper-tiny"
         default:
-            return modelName
+            // Bereits vollständiger Name oder unbekannter Alias — best-effort Passthrough
+            if modelName.hasPrefix("openai_whisper-") { return modelName }
+            return "openai_whisper-\(modelName)"
         }
     }
 

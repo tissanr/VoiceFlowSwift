@@ -115,12 +115,34 @@ final class PipelineCoordinator {
     }
     
     func warmup() async {
-        state.status = .initializing(progress: 0.1)
+        let variant = ModelManager.defaultWhisperVariant
+        if ModelManager.isCached(modelName: variant) {
+            state.status = .initializing(progress: 0.1)
+            do {
+                _ = try await transcriber.warmup()
+                state.status = .idle
+            } catch {
+                state.status = .error("Warmup fehlgeschlagen: \(error.localizedDescription)")
+            }
+        } else {
+            await downloadAndWarmup(variant: variant)
+        }
+    }
+
+    private func downloadAndWarmup(variant: String) async {
+        let downloader = ModelDownloader()
+        state.status = .downloading(model: variant, progress: 0)
         do {
-            _ = try await transcriber.warmup()
+            _ = try await downloader.downloadWhisperModel(variant: variant) { [weak self] progress in
+                Task { @MainActor [weak self] in
+                    self?.state.status = .downloading(model: variant, progress: progress)
+                }
+            }
+            state.status = .initializing(progress: 0.9)
+            _ = try? await transcriber.warmup()
             state.status = .idle
         } catch {
-            state.status = .error("Warmup fehlgeschlagen: \(error.localizedDescription)")
+            state.status = .error("Modell-Download fehlgeschlagen: \(error.localizedDescription)")
         }
     }
 }
