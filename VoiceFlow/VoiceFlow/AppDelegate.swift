@@ -77,7 +77,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     
     private func showOverlay(_ show: Bool) {
         if show {
-            overlayWindow?.makeKeyAndOrderFront(nil)
+            overlayWindow?.orderFrontRegardless()
         } else {
             overlayWindow?.orderOut(nil)
         }

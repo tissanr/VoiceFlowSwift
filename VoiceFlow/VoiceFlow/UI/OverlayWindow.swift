@@ -40,6 +40,8 @@ struct OverlayView: View {
                 processingView
             case .initializing(let progress):
                 progressView(title: "Initialisierung...", progress: progress)
+            case .downloading(let model, let progress):
+                progressView(title: "Download: \(model)", progress: progress)
             case .error(let msg):
                 errorView(msg)
             default:
