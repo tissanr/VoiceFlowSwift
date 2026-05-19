@@ -85,4 +85,16 @@ Aktuell existiert noch kein XCTest-Target.
 - ✅ Transcriber mit WhisperKit, Warmup, Retry und Halluzinationsfilter
 - ✅ VocabLearner mit `~/.voiceflow/vocab_cache.json`
 
-**Phase 4–7:** Noch offen
+**Phase 5 (Text Delivery):** ✅ Implementiert
+- ✅ CursorContext mit AX API (nativ & Electron)
+- ✅ TextInjector mit Direct AX, Keyboard Events (CGEvent) und Clipboard
+- ✅ TextDelivery Orchestrator mit App-Routing
+
+**Phase 6 (UI Implementation):** ✅ Implementiert
+- ✅ AppState & PipelineCoordinator (End-to-End Orchestrierung)
+- ✅ MenuBarController (nativ NSMenu)
+- ✅ OverlayWindow (SwiftUI Waveform-Animation)
+- ✅ HistoryWindow (Verlauf & Analytik)
+
+**Phase 7:** Noch offen
+
