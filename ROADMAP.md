@@ -1,6 +1,6 @@
 # VoiceFlow – Roadmap & Entwicklungsdokumentation
 
-> **Letzte Aktualisierung:** 2026-05-15 (Swift Phase 2/3 implementiert)
+> **Letzte Aktualisierung:** 2026-05-19 (Swift Hotkey-Permission-Fix)
 > **Maintainer:** Eduard Munt
 > **Zweck:** Nachvollziehbare Entwicklungsgeschichte, aktueller Stand, offene Punkte
 
@@ -87,6 +87,26 @@ Hotkey losgelassen
 ---
 
 ## Abgeschlossen
+
+### 2026-05-19 — Fix: Swift-Hotkey nach macOS-Input-Monitoring-Freigabe aktivieren
+
+**Problem:** Beim ersten Start konnte `Fn + Shift` wirkungslos bleiben, nachdem macOS Input Monitoring angefragt hatte. Die App fiel nach einem fehlgeschlagenen `CGEventTapCreate` auf Polling zurück, versuchte den Event-Tap nach der Freigabe aber erst nach einem Neustart erneut.
+
+**Lösung:**
+
+- `HotkeyManager` fragt Input Monitoring über `CGRequestListenEventAccess()` an und öffnet die Systemeinstellung nur einmal.
+- `CGEventTap` wird auf demselben dedizierten Thread erstellt, aktiviert und in dessen `CFRunLoop` betrieben.
+- Nach einem fehlgeschlagenen Event-Tap läuft ein Retry-Timer, der den Tap nach Berechtigungsfreigabe automatisch erstellt.
+- Der Event-Tap lauscht zusätzlich auf `keyDown`/`keyUp` und reaktiviert sich nach macOS-Timeouts.
+- Beim Beenden wird der Hotkey-Manager sauber gestoppt.
+
+**Tests:** `xcodebuild build -project VoiceFlow/VoiceFlow.xcodeproj -scheme VoiceFlow -configuration Debug` → erfolgreich.
+
+**Geänderte Dateien:**
+
+- `VoiceFlow/VoiceFlow/Input/HotkeyManager.swift`
+- `VoiceFlow/VoiceFlow/AppDelegate.swift`
+- `ROADMAP.md`
 
 ### 2026-05-12 — Distribution: Homebrew-Tap vorbereitet
 

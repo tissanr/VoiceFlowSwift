@@ -12,7 +12,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         hotkey.start()
     }
 
-    func applicationWillTerminate(_ notification: Notification) {}
+    func applicationWillTerminate(_ notification: Notification) {
+        hotkey.stop()
+    }
 
     func applicationSupportsSecureRestorableState(_ app: NSApplication) -> Bool { true }
 }
