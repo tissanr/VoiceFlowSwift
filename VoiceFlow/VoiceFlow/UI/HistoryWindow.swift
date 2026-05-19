@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Phase 6 — Verlauf & Analytik
+/// Phase 6 — History & Analytics
 struct HistoryView: View {
     @State private var entries: [HistoryEntry] = []
     @State private var selectedTab = 0
@@ -9,8 +9,8 @@ struct HistoryView: View {
     var body: some View {
         VStack {
             Picker("", selection: $selectedTab) {
-                Text("Verlauf").tag(0)
-                Text("Analyse").tag(1)
+                Text("History").tag(0)
+                Text("Analytics").tag(1)
             }
             .pickerStyle(.segmented)
             .padding()
@@ -33,7 +33,7 @@ struct HistoryView: View {
                         .font(.caption)
                         .foregroundColor(.secondary)
                     Spacer()
-                    Text("\(entry.words) Wörter")
+                    Text("\(entry.words) words")
                         .font(.caption2)
                 }
                 Text(entry.text)
@@ -47,11 +47,11 @@ struct HistoryView: View {
     private var analyticsView: some View {
         VStack(spacing: 20) {
             HStack(spacing: 40) {
-                statCard(title: "Wörter gesamt", value: "\(entries.reduce(0) { $0 + $1.words })")
-                statCard(title: "Sitzungen", value: "\(entries.count)")
+                statCard(title: "Total words", value: "\(entries.reduce(0) { $0 + $1.words })")
+                statCard(title: "Sessions", value: "\(entries.count)")
             }
             
-            Text("Aktivität (letzte 30 Tage)")
+            Text("Activity (last 30 days)")
                 .font(.headline)
             
             HStack(spacing: 4) {

@@ -1,6 +1,6 @@
 import Foundation
 
-// Phase 3 — Automatisches Vokabular-Lernen
+// Phase 3 — Automatic vocabulary learning
 actor VocabLearner {
     private static let maxEntries = 100
     private static let cacheURL = FileManager.default.homeDirectoryForCurrentUser
@@ -58,7 +58,7 @@ actor VocabLearner {
         if let payload = try? JSONDecoder().decode(CachePayload.self, from: data) {
             return (payload.corrections, payload.keyOrder)
         }
-        // Rückwärtskompatibilität mit dem alten Format (nur Dictionary)
+        // Backwards compatibility with the old format (dictionary only)
         if let legacy = try? JSONDecoder().decode([String: String].self, from: data) {
             return (legacy, legacy.keys.sorted())
         }
@@ -75,7 +75,7 @@ actor VocabLearner {
             let data = try JSONEncoder().encode(payload)
             try data.write(to: Self.cacheURL, options: .atomic)
         } catch {
-            print("[VocabLearner] Fehler beim Speichern: \(error)")
+            print("[VocabLearner] save error: \(error)")
         }
     }
 

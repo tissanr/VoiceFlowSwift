@@ -4,8 +4,8 @@ import CoreAudio
 
 typealias AudioSamples = [Float]
 
-// Phase 2 — Mikrofon-Aufnahme via AVFoundation
-// AVAudioEngine wird erst beim ersten Recording gestartet.
+// Phase 2 — Microphone recording via AVFoundation
+// AVAudioEngine is started only on the first recording.
 actor AudioRecorder {
     private let engine = AVAudioEngine()
     private let captureState = AudioCaptureState()
@@ -15,7 +15,7 @@ actor AudioRecorder {
 
     var currentRMS: Float { captureState.currentRMS }
 
-    // Sample-Rate und Format erwartet von WhisperKit
+    // Sample rate and format expected by WhisperKit
     private static let targetFormat = AVAudioFormat(
         commonFormat: .pcmFormatFloat32,
         sampleRate: 16_000,
@@ -25,7 +25,7 @@ actor AudioRecorder {
 
     // MARK: - Lifecycle
 
-    /// Einmalig vor dem ersten Recording aufrufen.
+    /// Call once before the first recording.
     func prepare() async throws {
         guard !isPrepared else { return }
 
@@ -194,13 +194,13 @@ extension AudioRecorderError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .microphoneAccessDenied:
-            return "Mikrofonzugriff wurde nicht erlaubt."
+            return "Microphone access was not granted."
         case .noInputDevice:
-            return "Kein gültiges Eingabegerät gefunden."
+            return "No valid input device found."
         case .engineStartFailed(let error):
-            return "Audio-Engine konnte nicht gestartet werden: \(error.localizedDescription)"
+            return "Audio engine could not be started: \(error.localizedDescription)"
         case .deviceSetFailed(let status):
-            return "Eingabegerät konnte nicht gesetzt werden: \(status)"
+            return "Input device could not be set: \(status)"
         }
     }
 }

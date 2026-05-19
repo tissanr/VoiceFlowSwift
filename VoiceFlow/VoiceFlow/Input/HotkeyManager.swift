@@ -1,8 +1,8 @@
 import Quartz
 import AppKit
 
-// Phase 2 — Globaler Fn+Shift Hotkey via CGEventTap
-// Fn-Bit (0x800000) ist undokumentiert aber auf Sequoia stabil.
+// Phase 2 — Global Fn+Shift hotkey via CGEventTap
+// Fn bit (0x800000) is undocumented but stable on Sequoia.
 final class HotkeyManager {
     var onStart: (() -> Void)?
     var onStop: (() -> Void)?
@@ -33,9 +33,9 @@ final class HotkeyManager {
         guard eventTap == nil, pollTimer == nil else { return }
 
         if createEventTap(openSettingsOnFailure: true) {
-            print("[HotkeyManager] CGEventTap erstellt — lausche auf Fn+Shift")
+            print("[HotkeyManager] CGEventTap created — listening for Fn+Shift")
         } else {
-            print("[HotkeyManager] CGEventTap fehlgeschlagen — Polling-Fallback aktiv, retry läuft")
+            print("[HotkeyManager] CGEventTap failed — polling fallback active, retrying")
             startPollingFallback()
             startPermissionRetryTimer()
         }
@@ -126,13 +126,13 @@ final class HotkeyManager {
         if type == .tapDisabledByTimeout || type == .tapDisabledByUserInput {
             if let eventTap {
                 CGEvent.tapEnable(tap: eventTap, enable: true)
-                print("[HotkeyManager] CGEventTap reaktiviert")
+                print("[HotkeyManager] CGEventTap re-enabled")
             }
             return
         }
 
         let flags = event.flags
-        // Fn-Bit 0x800000 ist undokumentiert (NX_DEVICELFNKEYMASK); auf Sequoia verifiziert.
+        // Fn bit 0x800000 is undocumented (NX_DEVICELFNKEYMASK); verified on Sequoia.
         let fnBit = CGEventFlags(rawValue: 0x0080_0000)
         if type == .flagsChanged {
             fnDown = flags.contains(fnBit)
@@ -143,7 +143,7 @@ final class HotkeyManager {
         updateRecordingState()
     }
 
-    // MARK: - Polling fallback (kein Input Monitoring grant)
+    // MARK: - Polling fallback (no Input Monitoring grant)
 
     private func startPollingFallback() {
         let timer = DispatchSource.makeTimerSource(
@@ -191,7 +191,7 @@ final class HotkeyManager {
             pollTimer = nil
             permissionRetryTimer?.cancel()
             permissionRetryTimer = nil
-            print("[HotkeyManager] CGEventTap nach Berechtigung erfolgreich erstellt")
+            print("[HotkeyManager] CGEventTap created after permission granted")
         }
     }
 
@@ -210,10 +210,10 @@ final class HotkeyManager {
 
     private func requestInputMonitoringPermissionIfNeeded() {
         let granted = CGPreflightListenEventAccess()
-        print("[HotkeyManager] Input-Monitoring preflight=\(granted) bundle=\(Bundle.main.bundlePath)")
+        print("[HotkeyManager] Input Monitoring preflight=\(granted) bundle=\(Bundle.main.bundlePath)")
         guard !granted else { return }
 
-        print("[HotkeyManager] Input-Monitoring-Berechtigung angefragt")
+        print("[HotkeyManager] Input Monitoring permission requested")
         if !CGRequestListenEventAccess() {
             openInputMonitoringSettingsOnce()
         }
@@ -224,6 +224,6 @@ final class HotkeyManager {
         didOpenInputMonitoringSettings = true
         let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_ListenEvent")!
         NSWorkspace.shared.open(url)
-        print("[HotkeyManager] Input-Monitoring-Einstellungen geöffnet")
+        print("[HotkeyManager] Input Monitoring settings opened")
     }
 }

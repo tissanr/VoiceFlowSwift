@@ -18,16 +18,15 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         print("✅ VOICEFLOW STARTED")
         NSApp.setActivationPolicy(.accessory)
         
-        // 1. Initialisierung
+        // 1. Initialization
         self.menuBar = MenuBarController(state: state)
         self.pipeline = PipelineCoordinator(state: state)
         self.overlayWindow = OverlayWindow()
-        
-        // SwiftUI View in Overlay einbetten
+
         let overlayView = OverlayView(state: state)
         overlayWindow?.contentView = NSHostingView(rootView: overlayView)
-        
-        // 2. Hotkey Setup
+
+        // 2. Hotkey setup
         hotkey.onStart = { [weak self] in
             Task { @MainActor in
                 await self?.pipeline?.beginRecording()
@@ -37,13 +36,13 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         hotkey.onStop = { [weak self] in
             Task { @MainActor in
                 await self?.pipeline?.endRecording()
-                // Overlay bleibt ggf. noch für Processing sichtbar
-                // und wird via State-Observer in showOverlay gesteuert
+                // Overlay may remain visible during processing
+                // and is controlled via the state observer in showOverlay
             }
         }
         hotkey.start()
         
-        // 3. MenuBar Actions
+        // 3. Menu bar actions
         menuBar?.onHistoryOpen = { [weak self] in
             self?.showHistory()
         }
@@ -51,9 +50,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             NSApp.terminate(nil)
         }
         
-        // 4. Accessibility-Zugriff prüfen (kein Popup — nur loggen; User ist bereits autorisiert)
+        // 4. Check Accessibility access (no prompt — log only; already authorized via System Settings)
         if !AXIsProcessTrusted() {
-            print("⚠️  Bedienungshilfen-Zugriff nicht gewährt — Text-Injektion nicht verfügbar")
+            print("⚠️  Accessibility access not granted — text injection unavailable")
         }
 
         // 5. Warmup
@@ -103,7 +102,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
                 backing: .buffered,
                 defer: false
             )
-            window.title = "VoiceFlow Verlauf"
+            window.title = "VoiceFlow History"
             window.contentView = NSHostingView(rootView: HistoryView())
             window.delegate = self
             window.center()

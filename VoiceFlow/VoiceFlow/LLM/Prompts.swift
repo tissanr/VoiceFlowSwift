@@ -15,43 +15,43 @@ struct Prompts {
         switch level {
         case .minimal:
             prompt = """
-            Du bist ein System zur Korrektur von Sprache-zu-Text-Transkriptionen.
-            Korrigiere AUSSCHLIESSLICH phonetische Fehler, Zeichensetzung und deutsche Großschreibung.
-            Ändere NIEMALS den Satzbau oder den Wortlaut.
-            Behalte den gesprochenen Stil exakt bei.
+            You are a speech-to-text transcription correction system.
+            Correct ONLY phonetic errors, punctuation, and capitalization.
+            NEVER change sentence structure or wording.
+            Preserve the spoken style exactly.
             """
         case .soft:
             prompt = """
-            Du bist ein System zur Korrektur von Sprache-zu-Text-Transkriptionen.
-            Korrigiere Grammatik, Zeichensetzung und Eigennamen.
-            Ändere den Satzbau nur, wenn er offensichtlich fehlerhaft ist.
+            You are a speech-to-text transcription correction system.
+            Correct grammar, punctuation, and proper nouns.
+            Only change sentence structure when it is clearly broken.
             """
         case .medium:
             prompt = """
-            Du bist ein Schreib-Assistent.
-            Verbessere den Text moderat, mache ihn flüssiger, aber behalte die ursprüngliche Bedeutung und den Stil bei.
+            You are a writing assistant.
+            Improve the text moderately — make it flow better, but preserve the original meaning and style.
             """
         case .high:
             prompt = """
-            Du bist ein Senior Editor.
-            Überarbeite den Text für maximale Klarheit und Professionalität.
-            Verwende einen gehobenen Stil, falls angemessen.
+            You are a senior editor.
+            Revise the text for maximum clarity and professionalism.
+            Use a refined style where appropriate.
             """
         }
         
         if !vocabulary.isEmpty {
-            prompt += "\n\nBeachte folgendes Fachvokabular/Eigennamen:\n"
+            prompt += "\n\nNote the following technical vocabulary/proper nouns:\n"
             prompt += vocabulary.joined(separator: ", ")
         }
-        
+
         switch style {
         case .concise:
-            prompt += "\nAntworte so kurz wie möglich."
+            prompt += "\nReply as briefly as possible."
         case .technical:
-            prompt += "\nGib NUR den Text zurück, keine Erklärungen oder Kommentare."
+            prompt += "\nReturn ONLY the text, no explanations or comments."
         }
-        
-        prompt += "\n\nGib NUR den korrigierten Text zurück, ohne Kommentare oder Einleitungen."
+
+        prompt += "\n\nReturn ONLY the corrected text, without comments or preamble."
         
         return prompt
     }
@@ -61,9 +61,9 @@ struct Prompts {
         
         if let capitalize = capitalize {
             if capitalize {
-                instructions += "\nErster Buchstabe MUSS großgeschrieben werden."
+                instructions += "\nFirst letter MUST be capitalized."
             } else {
-                instructions += "\nErster Buchstabe MUSS kleingeschrieben werden (Satzfortführung)."
+                instructions += "\nFirst letter MUST be lowercase (sentence continuation)."
             }
         }
         

@@ -33,23 +33,22 @@ actor LLMPostProcessor {
                 )
             case .mlx:
                 // TODO: mlx implementation
-                print("[LLMPostProcessor] MLX noch nicht implementiert, nutze Original")
+                print("[LLMPostProcessor] MLX not yet implemented, using original")
                 return text
             }
             
             let duration = CFAbsoluteTimeGetCurrent() - startTime
-            print("[LLMPostProcessor] Fertig in \(String(format: "%.2f", duration))s")
-            
-            // Validierung
+            print("[LLMPostProcessor] done in \(String(format: "%.2f", duration))s")
+
             if validateOutput(result, input: text) {
                 return result
             } else {
-                print("[LLMPostProcessor] Validierung fehlgeschlagen, nutze Original")
+                print("[LLMPostProcessor] validation failed, using original")
                 return text
             }
             
         } catch {
-            print("[LLMPostProcessor] Fehler: \(error)")
+            print("[LLMPostProcessor] error: \(error)")
             return text
         }
     }
@@ -73,34 +72,34 @@ actor LLMPostProcessor {
     private func validateOutput(_ output: String, input: String) -> Bool {
         guard !output.isEmpty else { return false }
         
-        // 1. Wortanzahl: max ±2 Wörter Abweichung oder 20%
+        // 1. Word count: max ±2 words deviation or 20%
         let inputWords = input.components(separatedBy: .whitespaces).filter { !$0.isEmpty }.count
         let outputWords = output.components(separatedBy: .whitespaces).filter { !$0.isEmpty }.count
         let diff = abs(inputWords - outputWords)
         let allowedDiff = max(2, Int(Double(inputWords) * 0.2))
         
         if diff > allowedDiff {
-            print("[LLMPostProcessor] Validierung: Wortanzahl-Abweichung zu groß (\(inputWords) -> \(outputWords))")
+            print("[LLMPostProcessor] validation: word count deviation too large (\(inputWords) -> \(outputWords))")
             return false
         }
         
-        // 2. Zeichenlänge (Ratio)
+        // 2. Character length (ratio)
         let inputLen = input.count
         let outputLen = output.count
         if inputLen > 0 {
             let ratio = Double(outputLen) / Double(inputLen)
             if ratio < 0.6 || ratio > 2.0 {
-                print("[LLMPostProcessor] Validierung: Ratio-Abweichung zu groß (\(ratio))")
+                print("[LLMPostProcessor] validation: ratio deviation too large (\(ratio))")
                 return false
             }
         }
         
-        // 3. Meta-Kommentare prüfen
+        // 3. Check for meta-commentary
         let lowercased = output.lowercased()
         let forbiddenStarts = ["hier ist", "sure,", "as an ai", "der korrigierte text", "bitteschön"]
         for start in forbiddenStarts {
             if lowercased.hasPrefix(start) {
-                print("[LLMPostProcessor] Validierung: Meta-Kommentar erkannt")
+                print("[LLMPostProcessor] validation: meta-commentary detected")
                 return false
             }
         }

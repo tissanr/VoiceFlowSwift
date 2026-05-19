@@ -1,7 +1,7 @@
 import Foundation
 import Combine
 
-/// Phase 6 — App-weiten Status verwalten
+/// Phase 6 — App-wide state management
 enum AppStatus: Equatable {
     case idle
     case recording
@@ -22,7 +22,7 @@ final class AppState: ObservableObject {
     let levelMapper = OverlayLevelMapper()
     var cancellables = Set<AnyCancellable>()
     
-    // singleton für einfachen Zugriff
+    // shared singleton
     static let shared = AppState()
     
     private init() {}

@@ -2,7 +2,7 @@ import Accelerate
 import Foundation
 import AppKit
 
-/// Phase 6 — Orchestriert den gesamten Flow (Audio -> Whisper -> LLM -> Delivery)
+/// Phase 6 — Orchestrates the full pipeline (Audio -> Whisper -> LLM -> Delivery)
 @MainActor
 final class PipelineCoordinator {
     
@@ -20,40 +20,40 @@ final class PipelineCoordinator {
         self.state = state
     }
     
-    /// Startet den Workflow (bei Hotkey Down)
+    /// Starts the pipeline (on hotkey down)
     func beginRecording() async {
         guard state.status == .idle else { return }
         
         capturedContext = CursorContext.get()
         recordingStarted = Date()
         
-        // 2. Aufnahme starten
+        // 2. Start recording
         do {
             try await recorder.prepare()
             try await recorder.start()
             state.status = .recording
             
-            // RMS-Updates für das Overlay
+            // RMS updates for the overlay
             startRMSUpdates()
         } catch {
-            state.status = .error("Mikrofon konnte nicht gestartet werden: \(error.localizedDescription)")
+            state.status = .error("Microphone could not be started: \(error.localizedDescription)")
         }
     }
     
-    /// Beendet den Workflow (bei Hotkey Up)
+    /// Ends the pipeline (on hotkey up)
     func endRecording() async {
         guard state.status == .recording else { return }
         
         state.status = .stopping
         
         do {
-            // 1. Audio abholen
+            // 1. Fetch audio
             let audio = await recorder.stop()
             var rmsVal: Float = 0; if !audio.isEmpty { vDSP_rmsqv(audio, 1, &rmsVal, vDSP_Length(audio.count)) }
-            print("[Pipeline] Audio-Samples: \(audio.count), RMS: \(String(format: "%.4f", rmsVal))")
+            print("[Pipeline] audio samples: \(audio.count), RMS: \(String(format: "%.4f", rmsVal))")
             state.status = .processing
 
-            // 2. Transkribieren
+            // 2. Transcribe
             let vocab = await vocabLearner.vocabulary
             let transcription = try await transcriber.transcribe(
                 audio: audio,
@@ -61,7 +61,7 @@ final class PipelineCoordinator {
                 vocabulary: vocab,
                 profile: state.settings.transcriptionProfile
             )
-            print("[Pipeline] Transkription: '\(transcription.text)' gefiltert=\(transcription.wasFiltered) rms=\(String(format: "%.4f", transcription.inputRMS))")
+            print("[Pipeline] transcription: '\(transcription.text)' filtered=\(transcription.wasFiltered) rms=\(String(format: "%.4f", transcription.inputRMS))")
 
             if transcription.text.isEmpty {
                 state.status = .idle
@@ -77,7 +77,7 @@ final class PipelineCoordinator {
                 vocabulary: vocab
             )
 
-            // 4. Lernen (Background)
+            // 4. Learn (background)
             if processedText != transcription.text {
                 await vocabLearner.learn(original: transcription.text, corrected: processedText)
             }
@@ -90,15 +90,15 @@ final class PipelineCoordinator {
                 correctionRatio: nil
             )
 
-            // 6. Ausliefern
-            print("[Pipeline] Liefere: '\(processedText)' via \(state.settings.textOutputMode) AX=\(TextInjector.canControlUI)")
+            // 6. Deliver
+            print("[Pipeline] delivering: '\(processedText)' via \(state.settings.textOutputMode) AX=\(TextInjector.canControlUI)")
             state.lastTranscription = processedText
             let result = await TextDelivery.deliver(
                 text: processedText,
                 context: capturedContext,
                 outputMode: state.settings.textOutputMode
             )
-            print("[Pipeline] Ergebnis: \(result)")
+            print("[Pipeline] result: \(result)")
 
             switch result {
             case .success:
@@ -108,8 +108,8 @@ final class PipelineCoordinator {
             }
 
         } catch {
-            print("[Pipeline] Fehler: \(error)")
-            state.status = .error("Fehler: \(error.localizedDescription)")
+            print("[Pipeline] error: \(error)")
+            state.status = .error("Error: \(error.localizedDescription)")
         }
     }
     
@@ -130,7 +130,7 @@ final class PipelineCoordinator {
                 _ = try await transcriber.warmup()
                 state.status = .idle
             } catch {
-                state.status = .error("Warmup fehlgeschlagen: \(error.localizedDescription)")
+                state.status = .error("Warmup failed: \(error.localizedDescription)")
             }
         } else {
             await downloadAndWarmup(variant: variant)
@@ -150,7 +150,7 @@ final class PipelineCoordinator {
             _ = try? await transcriber.warmup()
             state.status = .idle
         } catch {
-            state.status = .error("Modell-Download fehlgeschlagen: \(error.localizedDescription)")
+            state.status = .error("Model download failed: \(error.localizedDescription)")
         }
     }
 }

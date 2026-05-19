@@ -1,6 +1,6 @@
 import Foundation
 
-// Phase 3 — Modell-Download und Cache-Verwaltung
+// Phase 3 — Model download and cache management
 enum ModelManager {
     static let defaultWhisperVariant = "large-v3-turbo"
     static let whisperRepoID = "argmaxinc/whisperkit-coreml"
@@ -10,8 +10,8 @@ enum ModelManager {
             .appendingPathComponent(".cache/huggingface/hub")
     }
 
-    /// Gibt den kurzen Modellnamen zurück, den WhisperKit erwartet.
-    /// WhisperKit ergänzt den `openai_whisper-` Prefix bei der Repo-Suche selbst.
+    /// Returns the short model name expected by WhisperKit.
+    /// WhisperKit adds the `openai_whisper-` prefix itself during repo lookup.
     static func whisperVariant(for modelName: String) -> String {
         let normalized = modelName
             .trimmingCharacters(in: .whitespacesAndNewlines)
@@ -29,8 +29,8 @@ enum ModelManager {
         }
     }
 
-    /// Prüft ob das Modell lokal gecacht ist.
-    /// WhisperKit legt Modelle unter {downloadBase}/models/{org}/{repo}/openai_whisper-{variant}/ ab.
+    /// Returns true if the model is cached locally.
+    /// WhisperKit stores models at {downloadBase}/models/{org}/{repo}/openai_whisper-{variant}/.
     static func isCached(modelName: String) -> Bool {
         let variant = whisperVariant(for: modelName)
         let modelDir = whisperModelDir(variant: variant)
@@ -48,8 +48,8 @@ enum ModelManager {
         return false
     }
 
-    /// Pfad zum Modell-Verzeichnis, so wie WhisperKit es anlegt.
-    /// Struktur: {downloadBase}/models/{org}/{repo}/openai_whisper-{variant}/
+    /// Path to the model directory as laid out by WhisperKit.
+    /// Structure: {downloadBase}/models/{org}/{repo}/openai_whisper-{variant}/
     static func whisperModelDir(variant: String) -> URL {
         var url = huggingFaceCacheRoot.appendingPathComponent("models")
         for component in whisperRepoID.split(separator: "/") {

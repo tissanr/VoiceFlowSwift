@@ -1,6 +1,6 @@
 import Foundation
 
-// MARK: - Enums (Rückwärtskompatibel mit Python-settings.json — snake_case)
+// MARK: - Enums (backwards-compatible with Python settings.json — snake_case)
 
 enum EnhancementLevel: String, Codable {
     case none, minimal, soft, medium, high
@@ -45,7 +45,7 @@ struct AppSettings: Codable {
     var ollamaBaseURL: String = "http://localhost:11434"
     var ollamaModel: String = ""
 
-    // Explizite CodingKeys für Python snake_case Kompatibilität
+    // Explicit CodingKeys for Python snake_case compatibility
     enum CodingKeys: String, CodingKey {
         case modelSize = "model_size"
         case language, hotkey, microphone
@@ -85,7 +85,7 @@ struct AppSettings: Codable {
             encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
             try encoder.encode(self).write(to: url, options: .atomic)
         } catch {
-            print("[AppSettings] Fehler beim Speichern: \(error)")
+            print("[AppSettings] save error: \(error)")
         }
     }
 }

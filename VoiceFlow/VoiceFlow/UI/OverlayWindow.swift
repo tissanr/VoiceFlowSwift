@@ -1,7 +1,7 @@
 import SwiftUI
 import AppKit
 
-/// Phase 6 — Schwebendes Overlay-Panel
+/// Phase 6 — Floating overlay panel
 final class OverlayWindow: NSPanel {
     init() {
         super.init(
@@ -39,7 +39,7 @@ struct OverlayView: View {
             case .processing, .stopping:
                 processingView
             case .initializing(let progress):
-                progressView(title: "Initialisierung...", progress: progress)
+                progressView(title: "Initializing...", progress: progress)
             case .downloading(let model, let progress):
                 progressView(title: "Download: \(model)", progress: progress)
             case .error(let msg):
@@ -65,7 +65,7 @@ struct OverlayView: View {
         HStack {
             ProgressView()
                 .controlSize(.small)
-            Text("Verarbeitung...")
+            Text("Processing...")
         }
     }
     

@@ -1,7 +1,7 @@
 import Cocoa
 import Combine
 
-/// Phase 6 — NSStatusItem Menubar-Controller
+/// Phase 6 — NSStatusItem menu bar controller
 @MainActor
 final class MenuBarController: NSObject {
     
@@ -42,16 +42,16 @@ final class MenuBarController: NSObject {
         let menu = NSMenu()
 
         // 0. Hotkey hint
-        let hotkeyItem = NSMenuItem(title: "Aufnahme: Fn+Shift", action: nil, keyEquivalent: "")
+        let hotkeyItem = NSMenuItem(title: "Record: Fn+Shift", action: nil, keyEquivalent: "")
         hotkeyItem.isEnabled = false
         menu.addItem(hotkeyItem)
         menu.addItem(NSMenuItem.separator())
 
-        // 1. Verlauf
-        menu.addItem(withTitle: "Verlauf...", action: #selector(historyClicked), keyEquivalent: "y").target = self
+        // 1. History
+        menu.addItem(withTitle: "History...", action: #selector(historyClicked), keyEquivalent: "y").target = self
         menu.addItem(NSMenuItem.separator())
         
-        // 2. Modell
+        // 2. Model
         let modelMenu = NSMenu()
         ["tiny", "base", "small", "medium", "large-v3", "large-v3-turbo", "large-turbo"].forEach { variant in
             let item = NSMenuItem(title: variant, action: #selector(modelSelected(_:)), keyEquivalent: "")
@@ -59,11 +59,11 @@ final class MenuBarController: NSObject {
             item.state = (state.settings.modelSize == variant) ? .on : .off
             modelMenu.addItem(item)
         }
-        let modelItem = NSMenuItem(title: "Modell", action: nil, keyEquivalent: "")
+        let modelItem = NSMenuItem(title: "Model", action: nil, keyEquivalent: "")
         modelItem.submenu = modelMenu
         menu.addItem(modelItem)
         
-        // 3. Sprache
+        // 3. Language
         let langMenu = NSMenu()
         ["auto", "de", "en"].forEach { lang in
             let item = NSMenuItem(title: lang, action: #selector(languageSelected(_:)), keyEquivalent: "")
@@ -71,22 +71,22 @@ final class MenuBarController: NSObject {
             item.state = (state.settings.language == lang) ? .on : .off
             langMenu.addItem(item)
         }
-        let langItem = NSMenuItem(title: "Sprache", action: nil, keyEquivalent: "")
+        let langItem = NSMenuItem(title: "Language", action: nil, keyEquivalent: "")
         langItem.submenu = langMenu
         menu.addItem(langItem)
         
         menu.addItem(NSMenuItem.separator())
         
         // 4. Settings Toggles
-        let soundItem = NSMenuItem(title: "Töne", action: #selector(toggleSound), keyEquivalent: "")
+        let soundItem = NSMenuItem(title: "Sounds", action: #selector(toggleSound), keyEquivalent: "")
         soundItem.target = self
         soundItem.state = state.settings.soundEnabled ? .on : .off
         menu.addItem(soundItem)
         
         menu.addItem(NSMenuItem.separator())
         
-        // 5. Beenden
-        menu.addItem(withTitle: "Beenden", action: #selector(quitClicked), keyEquivalent: "q").target = self
+        // 5. Quit
+        menu.addItem(withTitle: "Quit", action: #selector(quitClicked), keyEquivalent: "q").target = self
         
         statusItem.menu = menu
     }
@@ -96,16 +96,16 @@ final class MenuBarController: NSObject {
         switch status {
         case .idle:
             button.title = ""
-            button.image = NSImage(systemSymbolName: "waveform", accessibilityDescription: "Bereit")
+            button.image = NSImage(systemSymbolName: "waveform", accessibilityDescription: "Ready")
         case .recording:
             button.title = "REC"
-            button.image = NSImage(systemSymbolName: "record.circle.fill", accessibilityDescription: "Aufnahme...")
+            button.image = NSImage(systemSymbolName: "record.circle.fill", accessibilityDescription: "Recording...")
         case .processing, .stopping:
             button.title = ""
-            button.image = NSImage(systemSymbolName: "ellipsis.circle", accessibilityDescription: "Verarbeitung...")
+            button.image = NSImage(systemSymbolName: "ellipsis.circle", accessibilityDescription: "Processing...")
         case .error:
             button.title = ""
-            button.image = NSImage(systemSymbolName: "exclamationmark.triangle", accessibilityDescription: "Fehler")
+            button.image = NSImage(systemSymbolName: "exclamationmark.triangle", accessibilityDescription: "Error")
         default:
             button.title = ""
             button.image = NSImage(systemSymbolName: "waveform", accessibilityDescription: "VoiceFlow")
