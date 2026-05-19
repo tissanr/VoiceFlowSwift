@@ -36,13 +36,17 @@ final class TextInjector {
         guard AXUIElementCopyAttributeValue(element, kAXValueAttribute as CFString, &value) == .success,
               let currentText = value as? String else { return false }
         
-        let prefix = currentText.prefix(context.count)
-        let suffix = currentText.dropFirst(context.count)
-        let newValue = String(prefix) + text + String(suffix)
-        
+        // Split at the context boundary using UTF-16 offsets to match the AX API
+        let utf16Count = context.utf16.count
+        let utf16View = currentText.utf16
+        guard let splitUTF16 = utf16View.index(utf16View.startIndex, offsetBy: utf16Count, limitedBy: utf16View.endIndex),
+              let splitChar = splitUTF16.samePosition(in: currentText) else { return false }
+        let newValue = String(currentText[..<splitChar]) + text + String(currentText[splitChar...])
+
         guard AXUIElementSetAttributeValue(element, kAXValueAttribute as CFString, newValue as CFTypeRef) == .success else { return false }
-        
-        var range = CFRange(location: context.count + text.count, length: 0)
+
+        // Cursor position as UTF-16 offset so AX places it correctly
+        var range = CFRange(location: utf16Count + text.utf16.count, length: 0)
         guard let axRange = AXValueCreate(.cfRange, &range) else { return true }
         AXUIElementSetAttributeValue(element, kAXSelectedTextRangeAttribute as CFString, axRange)
         return true
@@ -64,15 +68,25 @@ final class TextInjector {
         NSPasteboard.general.setString(text, forType: .string)
     }
     
-    @MainActor static func saveClipboard() -> (String?, [NSPasteboardItem]?) {
-        let pb = NSPasteboard.general
-        return (pb.string(forType: .string), pb.pasteboardItems)
+    // Deep-copies all item data before clearContents() invalidates the live items.
+    @MainActor static func saveClipboard() -> [[NSPasteboard.PasteboardType: Data]] {
+        guard let items = NSPasteboard.general.pasteboardItems else { return [] }
+        return items.map { item in
+            Dictionary(uniqueKeysWithValues: item.types.compactMap { type in
+                item.data(forType: type).map { (type, $0) }
+            })
+        }
     }
-    
-    @MainActor static func restoreClipboard(text: String?, items: [NSPasteboardItem]?) {
+
+    @MainActor static func restoreClipboard(_ saved: [[NSPasteboard.PasteboardType: Data]]) {
         let pb = NSPasteboard.general
         pb.clearContents()
-        if let items = items { pb.writeObjects(items) }
-        else if let text = text { pb.setString(text, forType: .string) }
+        guard !saved.isEmpty else { return }
+        let newItems = saved.map { typeDataMap -> NSPasteboardItem in
+            let item = NSPasteboardItem()
+            for (type, data) in typeDataMap { item.setData(data, forType: type) }
+            return item
+        }
+        pb.writeObjects(newItems)
     }
 }

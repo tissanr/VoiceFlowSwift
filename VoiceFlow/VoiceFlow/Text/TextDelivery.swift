@@ -55,11 +55,12 @@ final class TextDelivery {
     }
     
     private static func pasteDelivery(_ text: String) async -> DeliveryResult {
-        let (oldText, oldItems) = await TextInjector.saveClipboard()
+        let saved = await TextInjector.saveClipboard()
         await TextInjector.copyToClipboard(text)
         let ok = TextInjector.triggerPaste()
+        // 100 ms gives the target app time to process the paste before we restore
         try? await Task.sleep(for: .milliseconds(100))
-        await TextInjector.restoreClipboard(text: oldText, items: oldItems)
+        await TextInjector.restoreClipboard(saved)
         return ok ? .success : .failure("Paste failed")
     }
 }

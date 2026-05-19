@@ -15,8 +15,7 @@ struct CursorContext {
         guard result == .success, let focusedCF = focusedElement else {
             return getFromActiveWindow()
         }
-        let element = focusedCF as! AXUIElement
-        return getContext(from: element)
+        return getContext(from: focusedCF as! AXUIElement)
     }
     
     /// Extrahiert den Kontext aus einem AXUIElement
@@ -31,22 +30,26 @@ struct CursorContext {
         var selectedRangeValue: CFTypeRef?
         let rangeResult = AXUIElementCopyAttributeValue(element, kAXSelectedTextRangeAttribute as CFString, &selectedRangeValue)
         
+        // AX selection range uses UTF-16 offsets
         var range = CFRange(location: 0, length: 0)
         if rangeResult == .success, let rangeCF = selectedRangeValue {
             AXValueGetValue(rangeCF as! AXValue, .cfRange, &range)
         } else {
-            range.location = text.count
+            range.location = text.utf16.count
         }
-        
-        let index = text.index(text.startIndex, offsetBy: max(0, min(range.location, text.count)))
-        return String(text[..<index])
+
+        let utf16 = text.utf16
+        let clampedOffset = max(0, min(range.location, utf16.count))
+        let utf16Index = utf16.index(utf16.startIndex, offsetBy: clampedOffset)
+        guard let charIndex = utf16Index.samePosition(in: text) else { return nil }
+        return String(text[..<charIndex])
     }
     
     private static func getFromActiveWindow() -> String? {
         guard let frontApp = NSWorkspace.shared.frontmostApplication else { return nil }
         let appElement = AXUIElementCreateApplication(frontApp.processIdentifier)
         
-        AXUIElementSetAttributeValue(appElement, "AXManualAccessibility" as CFString, true as CFTypeRef)
+        AXUIElementSetAttributeValue(appElement, "AXManualAccessibility" as CFString, kCFBooleanTrue)
         
         var focusedWindow: CFTypeRef?
         guard AXUIElementCopyAttributeValue(appElement, kAXFocusedWindowAttribute as CFString, &focusedWindow) == .success else {
