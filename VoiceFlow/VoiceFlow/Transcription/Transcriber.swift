@@ -92,7 +92,12 @@ actor Transcriber {
     ) async throws -> VoiceFlowTranscriptionResult {
         let kit = try await loadWhisperKit()
         let results = try await kit.transcribe(audioArray: audio, decodeOptions: options)
-        let text = results.map(\.text).joined(separator: " ").trimmingCharacters(in: .whitespacesAndNewlines)
+        let rawText = results.map(\.text).joined(separator: " ").trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        // Phase 4: Textnormalisierung & Repetitionsfilter
+        let normalizedText = TextNormalizer.normalize(rawText)
+        let text = TextNormalizer.filterRepetitions(normalizedText)
+        
         let language = results.first?.language ?? options.language ?? "unknown"
         let avgLogprob = Self.averageLogprob(results)
         let wasFiltered = Self.shouldFilter(text: text, inputRMS: inputRMS, avgLogprob: avgLogprob)
