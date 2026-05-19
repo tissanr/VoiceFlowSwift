@@ -30,33 +30,31 @@ enum ModelManager {
     }
 
     /// Prüft ob das Modell lokal gecacht ist.
-    /// Als Nachweis genügt ein *.mlmodelc-Verzeichnis oder eine *.bin-Datei > 1 MB
-    /// im Repo-Cache-Ordner des Whisper-Repos.
+    /// WhisperKit legt Modelle unter {downloadBase}/models/{org}/{repo}/openai_whisper-{variant}/ ab.
     static func isCached(modelName: String) -> Bool {
-        let root = whisperRepoCacheRoot
+        let variant = whisperVariant(for: modelName)
+        let modelDir = whisperModelDir(variant: variant)
         guard let enumerator = FileManager.default.enumerator(
-            at: root,
-            includingPropertiesForKeys: [.isDirectoryKey, .fileSizeKey],
+            at: modelDir,
+            includingPropertiesForKeys: [.isDirectoryKey],
             options: [.skipsHiddenFiles]
-        ) else {
-            return false
-        }
-
+        ) else { return false }
         for case let url as URL in enumerator {
-            let values = try? url.resourceValues(forKeys: [.isDirectoryKey, .fileSizeKey])
-            if values?.isDirectory == true, url.pathExtension == "mlmodelc" {
-                return true
-            }
-            if url.pathExtension == "bin", (values?.fileSize ?? 0) > 1_000_000 {
+            if (try? url.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) == true,
+               url.pathExtension == "mlmodelc" {
                 return true
             }
         }
         return false
     }
 
-    /// Wurzel des lokalen HuggingFace-Cache-Ordners für das Whisper-Repo.
-    static var whisperRepoCacheRoot: URL {
-        let repoFolder = "models--" + whisperRepoID.replacingOccurrences(of: "/", with: "--")
-        return huggingFaceCacheRoot.appendingPathComponent(repoFolder)
+    /// Pfad zum Modell-Verzeichnis, so wie WhisperKit es anlegt.
+    /// Struktur: {downloadBase}/models/{org}/{repo}/openai_whisper-{variant}/
+    static func whisperModelDir(variant: String) -> URL {
+        var url = huggingFaceCacheRoot.appendingPathComponent("models")
+        for component in whisperRepoID.split(separator: "/") {
+            url = url.appendingPathComponent(String(component))
+        }
+        return url.appendingPathComponent("openai_whisper-" + variant)
     }
 }
