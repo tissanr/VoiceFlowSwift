@@ -1,3 +1,4 @@
+import Accelerate
 import Foundation
 import AppKit
 
@@ -48,8 +49,10 @@ final class PipelineCoordinator {
         do {
             // 1. Audio abholen
             let audio = await recorder.stop()
+            var rmsVal: Float = 0; if !audio.isEmpty { vDSP_rmsqv(audio, 1, &rmsVal, vDSP_Length(audio.count)) }
+            print("[Pipeline] Audio-Samples: \(audio.count), RMS: \(String(format: "%.4f", rmsVal))")
             state.status = .processing
-            
+
             // 2. Transkribieren
             let vocab = await vocabLearner.vocabulary
             let transcription = try await transcriber.transcribe(
@@ -58,12 +61,13 @@ final class PipelineCoordinator {
                 vocabulary: vocab,
                 profile: state.settings.transcriptionProfile
             )
-            
+            print("[Pipeline] Transkription: '\(transcription.text)' gefiltert=\(transcription.wasFiltered) rms=\(String(format: "%.4f", transcription.inputRMS))")
+
             if transcription.text.isEmpty {
                 state.status = .idle
                 return
             }
-            
+
             // 3. LLM Enhancement (optional)
             let capitalized = CursorContext.shouldCapitalize(context: capturedContext)
             let processedText = await llmProcessor.process(
@@ -72,12 +76,12 @@ final class PipelineCoordinator {
                 capitalize: capitalized,
                 vocabulary: vocab
             )
-            
+
             // 4. Lernen (Background)
             if processedText != transcription.text {
                 await vocabLearner.learn(original: transcription.text, corrected: processedText)
             }
-            
+
             // 5. Logging
             let duration = recordingStarted.map { Date().timeIntervalSince($0) }
             await wordLogger.log(
@@ -85,23 +89,26 @@ final class PipelineCoordinator {
                 durationS: duration,
                 correctionRatio: nil
             )
-            
+
             // 6. Ausliefern
+            print("[Pipeline] Liefere: '\(processedText)' via \(state.settings.textOutputMode) AX=\(TextInjector.canControlUI)")
             state.lastTranscription = processedText
             let result = await TextDelivery.deliver(
                 text: processedText,
                 context: capturedContext,
                 outputMode: state.settings.textOutputMode
             )
-            
+            print("[Pipeline] Ergebnis: \(result)")
+
             switch result {
             case .success:
                 state.status = .idle
             case .failure(let error):
                 state.status = .error(error)
             }
-            
+
         } catch {
+            print("[Pipeline] Fehler: \(error)")
             state.status = .error("Fehler: \(error.localizedDescription)")
         }
     }

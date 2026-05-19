@@ -1,6 +1,7 @@
 import Cocoa
 import SwiftUI
 import Combine
+import ApplicationServices
 
 @MainActor
 class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
@@ -50,11 +51,18 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             NSApp.terminate(nil)
         }
         
-        // 4. Warmup
+        // 4. Accessibility-Zugriff anfragen (für Text-Injektion via CGEvent/AX)
+        let axOptions = [kAXTrustedCheckOptionPrompt.takeUnretainedValue(): true] as CFDictionary
+        let trusted = AXIsProcessTrustedWithOptions(axOptions)
+        if !trusted {
+            print("⚠️  Bedienungshilfen-Zugriff nicht gewährt — Text-Injektion nicht verfügbar")
+        }
+
+        // 5. Warmup
         Task {
             await pipeline?.warmup()
         }
-        
+
         setupStateObservers()
     }
 
