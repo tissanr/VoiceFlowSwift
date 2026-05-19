@@ -1,7 +1,7 @@
 import Foundation
 
-// Phase 2 — RMS → normalisierte Balkenhöhen für die Overlay-Visualisierung
-// Portiert von ui/overlay_levels.py (VisualLevelMapper)
+// Phase 2 — RMS → normalized bar heights for the overlay visualization
+// Ported from ui/overlay_levels.py (VisualLevelMapper)
 final class OverlayLevelMapper {
     private var noiseFloor: Float = 0.0015
     private var speechPeak: Float = 0.0200
@@ -11,7 +11,7 @@ final class OverlayLevelMapper {
 
     // MARK: - Public
 
-    /// Gibt barCount normalisierte Höhen (0…1) für die aktuelle RMS zurück.
+    /// Returns barCount normalized heights (0…1) for the current RMS.
     func barHeights(rms: Float, phase: Double) -> [Double] {
         let level = Double(map(rms: rms))
         return (0..<Self.barCount).map { i in
@@ -32,7 +32,7 @@ final class OverlayLevelMapper {
     private func map(rms: Float) -> Float {
         let rms = max(0.0, rms)
 
-        // Noise-floor adaptiv tracken
+        // Track noise floor adaptively
         if rms < noiseFloor * 1.8 {
             noiseFloor = 0.98 * noiseFloor + 0.02 * rms
         } else {
@@ -55,7 +55,7 @@ final class OverlayLevelMapper {
         let normalized = min(1.0, signal / max(speechPeak, 0.006))
         let level = max(0.16, pow(normalized, 0.55))
 
-        // Exponentielles Smoothing (α = 0.3)
+        // Exponential smoothing (α = 0.3)
         smoothed = smoothed * 0.7 + level * 0.3
         return smoothed
     }

@@ -4,17 +4,18 @@ import CoreAudio
 
 typealias AudioSamples = [Float]
 
-// Phase 2 — Mikrofon-Aufnahme via AVFoundation
-// AVAudioEngine wird beim App-Start warm gehalten; nur der Tap wird ein-/ausgeschaltet.
+// Phase 2 — Microphone recording via AVFoundation
+// AVAudioEngine is started only on the first recording.
 actor AudioRecorder {
     private let engine = AVAudioEngine()
     private let captureState = AudioCaptureState()
     private var converter: AVAudioConverter?
+    private var isPrepared = false
     private var isRecording = false
 
     var currentRMS: Float { captureState.currentRMS }
 
-    // Sample-Rate und Format erwartet von WhisperKit
+    // Sample rate and format expected by WhisperKit
     private static let targetFormat = AVAudioFormat(
         commonFormat: .pcmFormatFloat32,
         sampleRate: 16_000,
@@ -24,20 +25,12 @@ actor AudioRecorder {
 
     // MARK: - Lifecycle
 
-    /// Einmalig beim App-Start aufrufen — hält Engine warm.
+    /// Call once before the first recording.
     func prepare() async throws {
+        guard !isPrepared else { return }
+
         try await requestMicrophonePermission()
-        let inputNode = engine.inputNode
-        let inputFormat = inputNode.outputFormat(forBus: 0)
-
-        if inputFormat.sampleRate != 16_000 || inputFormat.channelCount != 1 {
-            converter = AVAudioConverter(from: inputFormat, to: Self.targetFormat)
-        }
-
-        // Dummy-Tap damit die Engine gestartet werden kann
-        inputNode.installTap(onBus: 0, bufferSize: 4096, format: inputFormat) { _, _ in }
-        try engine.start()
-        inputNode.removeTap(onBus: 0)
+        isPrepared = true
     }
 
     // MARK: - Recording
@@ -52,6 +45,15 @@ actor AudioRecorder {
         let inputNode = engine.inputNode
         let inputFormat = inputNode.outputFormat(forBus: 0)
         let targetFormat = Self.targetFormat
+        guard inputFormat.sampleRate > 0, inputFormat.channelCount > 0 else {
+            throw AudioRecorderError.noInputDevice
+        }
+
+        if inputFormat.sampleRate != targetFormat.sampleRate || inputFormat.channelCount != targetFormat.channelCount {
+            converter = AVAudioConverter(from: inputFormat, to: targetFormat)
+        } else {
+            converter = nil
+        }
 
         captureState.reset(reservingCapacity: 16_000 * 120)
         let converter = converter
@@ -66,7 +68,12 @@ actor AudioRecorder {
         }
 
         if !engine.isRunning {
-            try engine.start()
+            do {
+                try engine.start()
+            } catch {
+                inputNode.removeTap(onBus: 0)
+                throw AudioRecorderError.engineStartFailed(error)
+            }
         }
         isRecording = true
     }
@@ -96,7 +103,6 @@ actor AudioRecorder {
         }
         engine.inputNode.removeTap(onBus: 0)
         engine.reset()
-        try engine.start()
     }
 
     // MARK: - Permission
@@ -179,5 +185,22 @@ private final class AudioCaptureState: @unchecked Sendable {
 
 enum AudioRecorderError: Error {
     case microphoneAccessDenied
+    case noInputDevice
+    case engineStartFailed(Error)
     case deviceSetFailed(OSStatus)
+}
+
+extension AudioRecorderError: LocalizedError {
+    var errorDescription: String? {
+        switch self {
+        case .microphoneAccessDenied:
+            return "Microphone access was not granted."
+        case .noInputDevice:
+            return "No valid input device found."
+        case .engineStartFailed(let error):
+            return "Audio engine could not be started: \(error.localizedDescription)"
+        case .deviceSetFailed(let status):
+            return "Input device could not be set: \(status)"
+        }
+    }
 }

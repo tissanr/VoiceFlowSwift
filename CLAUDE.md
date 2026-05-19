@@ -90,4 +90,10 @@ Aktuell existiert noch kein XCTest-Target.
 - ✅ TextInjector mit Direct AX, Keyboard Events (CGEvent) und Clipboard
 - ✅ TextDelivery Orchestrator mit App-Routing
 
-**Phase 4, 6–7:** Noch offen
+**Phase 6 (UI Implementation):** ✅ Implementiert
+- ✅ AppState & PipelineCoordinator (End-to-End Orchestrierung)
+- ✅ MenuBarController (nativ NSMenu)
+- ✅ OverlayWindow (SwiftUI Waveform-Animation)
+- ✅ HistoryWindow (Verlauf & Analytik)
+
+**Phase 7:** Noch offen
