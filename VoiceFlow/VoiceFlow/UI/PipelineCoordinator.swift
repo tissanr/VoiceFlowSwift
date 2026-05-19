@@ -12,10 +12,10 @@ final class PipelineCoordinator {
     private let vocabLearner = VocabLearner()
     private let wordLogger = WordLogger.shared
     
-    // Wir speichern den Cursor-Kontext VOR der Aufnahme
     private var capturedContext: String?
+    private var recordingStarted: Date?
     
-    init(state: AppState = .shared) {
+    init(state: AppState) {
         self.state = state
     }
     
@@ -23,8 +23,8 @@ final class PipelineCoordinator {
     func beginRecording() async {
         guard state.status == .idle else { return }
         
-        // 1. Kontext vor der Aufnahme erfassen
         capturedContext = CursorContext.get()
+        recordingStarted = Date()
         
         // 2. Aufnahme starten
         do {
@@ -46,7 +46,7 @@ final class PipelineCoordinator {
         
         do {
             // 1. Audio abholen
-            let audio = try await recorder.stop()
+            let audio = await recorder.stop()
             state.status = .processing
             
             // 2. Transkribieren
@@ -78,9 +78,10 @@ final class PipelineCoordinator {
             }
             
             // 5. Logging
+            let duration = recordingStarted.map { Date().timeIntervalSince($0) }
             await wordLogger.log(
                 text: processedText,
-                durationS: 0, // TODO: Zeit messen
+                durationS: duration,
                 correctionRatio: nil
             )
             

@@ -40,14 +40,14 @@ final class TextDelivery {
         
         let bundleID = NSWorkspace.shared.frontmostApplication?.bundleIdentifier ?? ""
         switch outputMode {
-        case .typing: return TextInjector.typeText(processedText) ? .success : .failure("Typing failed")
+        case .typing: return await TextInjector.typeText(processedText) ? .success : .failure("Typing failed")
         case .paste: return await pasteDelivery(processedText)
         case .clipboardOnly: await TextInjector.copyToClipboard(processedText); return .success
         case .automatic:
-            if terminalBundles.contains(bundleID) { return TextInjector.typeText(processedText.trimmingCharacters(in: .newlines)) ? .success : .failure("Terminal typing failed") }
+            if terminalBundles.contains(bundleID) { return await TextInjector.typeText(processedText.trimmingCharacters(in: .newlines)) ? .success : .failure("Terminal typing failed") }
             if let context = context {
                 if TextInjector.insertDirect(processedText, context: context) { return .success }
-                return TextInjector.typeText(processedText) ? .success : .failure("Fallback typing failed")
+                return await TextInjector.typeText(processedText) ? .success : .failure("Fallback typing failed")
             }
             if browserBundles.contains(bundleID) { return await pasteDelivery(processedText) }
             await TextInjector.copyToClipboard(processedText); return .success
@@ -57,11 +57,9 @@ final class TextDelivery {
     private static func pasteDelivery(_ text: String) async -> DeliveryResult {
         let (oldText, oldItems) = await TextInjector.saveClipboard()
         await TextInjector.copyToClipboard(text)
-        if TextInjector.triggerPaste() {
-            try? await Task.sleep(for: .milliseconds(100))
-            await TextInjector.restoreClipboard(text: oldText, items: oldItems)
-            return .success
-        }
-        return .failure("Paste failed")
+        let ok = TextInjector.triggerPaste()
+        try? await Task.sleep(for: .milliseconds(100))
+        await TextInjector.restoreClipboard(text: oldText, items: oldItems)
+        return ok ? .success : .failure("Paste failed")
     }
 }

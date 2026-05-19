@@ -2,7 +2,8 @@ import Cocoa
 import SwiftUI
 import Combine
 
-class AppDelegate: NSObject, NSApplicationDelegate {
+@MainActor
+class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     
     private let state = AppState.shared
     private var menuBar: MenuBarController?
@@ -71,7 +72,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                     self?.showOverlay(true)
                 }
             }
-            .store(in: &state.cancellables) // Ich muss cancellables in AppState hinzufügen
+            .store(in: &state.cancellables)
     }
     
     private func showOverlay(_ show: Bool) {
@@ -92,11 +93,16 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             )
             window.title = "VoiceFlow Verlauf"
             window.contentView = NSHostingView(rootView: HistoryView())
+            window.delegate = self
             window.center()
             self.historyWindow = window
         }
         NSApp.activate(ignoringOtherApps: true)
         historyWindow?.makeKeyAndOrderFront(nil)
+    }
+
+    func windowWillClose(_ notification: Notification) {
+        historyWindow = nil
     }
 
     func applicationWillTerminate(_ notification: Notification) {}

@@ -12,6 +12,7 @@ enum AppStatus: Equatable {
     case error(String)
 }
 
+@MainActor
 final class AppState: ObservableObject {
     @Published var status: AppStatus = .idle
     @Published var settings: AppSettings = AppSettings.load()

@@ -4,7 +4,8 @@ import SwiftUI
 struct HistoryView: View {
     @State private var entries: [HistoryEntry] = []
     @State private var selectedTab = 0
-    
+    @State private var heatValues: [Double] = (0..<30).map { _ in Double.random(in: 0.1...1.0) }
+
     var body: some View {
         VStack {
             Picker("", selection: $selectedTab) {
@@ -13,7 +14,7 @@ struct HistoryView: View {
             }
             .pickerStyle(.segmented)
             .padding()
-            
+
             if selectedTab == 0 {
                 historyList
             } else {
@@ -21,7 +22,7 @@ struct HistoryView: View {
             }
         }
         .frame(minWidth: 600, minHeight: 400)
-        .onAppear(perform: loadEntries)
+        .task { await loadEntries() }
     }
     
     private var historyList: some View {
@@ -53,11 +54,10 @@ struct HistoryView: View {
             Text("Aktivität (letzte 30 Tage)")
                 .font(.headline)
             
-            // Heatmap-Platzhalter
             HStack(spacing: 4) {
-                ForEach(0..<30) { _ in
+                ForEach(0..<30, id: \.self) { i in
                     Rectangle()
-                        .fill(Color.blue.opacity(Double.random(in: 0.1...1.0)))
+                        .fill(Color.blue.opacity(heatValues[i]))
                         .frame(width: 15, height: 15)
                         .cornerRadius(2)
                 }
@@ -75,18 +75,24 @@ struct HistoryView: View {
         }
     }
     
-    private func loadEntries() {
-        // TODO: word_log.jsonl laden
-        self.entries = [
-            HistoryEntry(text: "Das ist ein Beispiel-Diktat.", date: Date(), words: 5),
-            HistoryEntry(text: "VoiceFlow funktioniert jetzt nativ in Swift.", date: Date().addingTimeInterval(-86400), words: 7)
-        ]
+    private func loadEntries() async {
+        let logEntries = await WordLogger.shared.readEntries(limit: 200)
+        self.entries = logEntries.map { e in
+            HistoryEntry(text: e.text, date: e.date ?? Date(), words: e.words)
+        }
     }
 }
 
-struct HistoryEntry: Identifiable {
-    let id = UUID()
+struct HistoryEntry: Identifiable, Codable {
+    let id: UUID
     let text: String
     let date: Date
     let words: Int
+
+    init(text: String, date: Date, words: Int) {
+        self.id = UUID()
+        self.text = text
+        self.date = date
+        self.words = words
+    }
 }

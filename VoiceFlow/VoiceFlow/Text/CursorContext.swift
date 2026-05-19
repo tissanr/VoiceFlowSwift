@@ -12,10 +12,10 @@ struct CursorContext {
         var focusedElement: CFTypeRef?
         let result = AXUIElementCopyAttributeValue(systemWide, kAXFocusedUIElementAttribute as CFString, &focusedElement)
         
-        guard result == .success, let element = focusedElement as! AXUIElement? else {
+        guard result == .success, let focusedCF = focusedElement else {
             return getFromActiveWindow()
         }
-        
+        let element = focusedCF as! AXUIElement
         return getContext(from: element)
     }
     
@@ -32,8 +32,8 @@ struct CursorContext {
         let rangeResult = AXUIElementCopyAttributeValue(element, kAXSelectedTextRangeAttribute as CFString, &selectedRangeValue)
         
         var range = CFRange(location: 0, length: 0)
-        if rangeResult == .success {
-            AXValueGetValue(selectedRangeValue as! AXValue, .cfRange, &range)
+        if rangeResult == .success, let rangeCF = selectedRangeValue {
+            AXValueGetValue(rangeCF as! AXValue, .cfRange, &range)
         } else {
             range.location = text.count
         }
@@ -53,9 +53,12 @@ struct CursorContext {
             return nil
         }
         
+        guard let windowCF = focusedWindow else { return nil }
+        let win = windowCF as! AXUIElement
         var focusedElement: CFTypeRef?
-        if AXUIElementCopyAttributeValue(focusedWindow as! AXUIElement, kAXFocusedUIElementAttribute as CFString, &focusedElement) == .success {
-            return getContext(from: focusedElement as! AXUIElement)
+        if AXUIElementCopyAttributeValue(win, kAXFocusedUIElementAttribute as CFString, &focusedElement) == .success,
+           let focusedCF = focusedElement {
+            return getContext(from: focusedCF as! AXUIElement)
         }
         
         return nil

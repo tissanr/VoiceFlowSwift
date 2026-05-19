@@ -2,6 +2,7 @@ import Cocoa
 import Combine
 
 /// Phase 6 — NSStatusItem Menubar-Controller
+@MainActor
 final class MenuBarController: NSObject {
     
     private var statusItem: NSStatusItem!
@@ -12,7 +13,7 @@ final class MenuBarController: NSObject {
     var onHistoryOpen: (() -> Void)?
     var onQuit: (() -> Void)?
     
-    init(state: AppState = .shared) {
+    init(state: AppState) {
         self.state = state
         super.init()
         setupStatusItem()
@@ -46,7 +47,7 @@ final class MenuBarController: NSObject {
         
         // 2. Modell
         let modelMenu = NSMenu()
-        ["tiny", "base", "small", "medium", "large", "large-turbo"].forEach { variant in
+        ["tiny", "base", "small", "medium", "large-v3", "large-v3-turbo", "large-turbo"].forEach { variant in
             let item = NSMenuItem(title: variant, action: #selector(modelSelected(_:)), keyEquivalent: "")
             item.target = self
             item.state = (state.settings.modelSize == variant) ? .on : .off

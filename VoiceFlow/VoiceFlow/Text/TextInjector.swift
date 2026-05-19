@@ -6,13 +6,13 @@ import Quartz
 /// Phase 5 — Text-Injektion via CGEventPost / AX API
 final class TextInjector {
     
-    static func typeText(_ text: String) -> Bool {
-        let source = CGEventSource(stateID: .combinedSessionState)
+    static func typeText(_ text: String) async -> Bool {
+        guard let source = CGEventSource(stateID: .combinedSessionState) else { return false }
         for scalar in text.unicodeScalars {
             let keyCode: CGKeyCode = (scalar.value == 0x0A || scalar.value == 0x0D) ? 36 : 0
             guard let keyDown = CGEvent(keyboardEventSource: source, virtualKey: keyCode, keyDown: true),
                   let keyUp = CGEvent(keyboardEventSource: source, virtualKey: keyCode, keyDown: false) else { continue }
-            
+
             if keyCode == 0 {
                 var utf16 = Array(scalar.utf16)
                 keyDown.keyboardSetUnicodeString(stringLength: utf16.count, unicodeString: &utf16)
@@ -20,7 +20,7 @@ final class TextInjector {
             }
             keyDown.post(tap: .cghidEventTap)
             keyUp.post(tap: .cghidEventTap)
-            Thread.sleep(forTimeInterval: 0.001)
+            try? await Task.sleep(for: .milliseconds(1))
         }
         return true
     }
@@ -28,8 +28,9 @@ final class TextInjector {
     static func insertDirect(_ text: String, context: String) -> Bool {
         let systemWide = AXUIElementCreateSystemWide()
         var focusedElement: CFTypeRef?
-        guard AXUIElementCopyAttributeValue(systemWide, kAXFocusedUIElementAttribute as CFString, &focusedElement) == .success else { return false }
-        let element = focusedElement as! AXUIElement
+        guard AXUIElementCopyAttributeValue(systemWide, kAXFocusedUIElementAttribute as CFString, &focusedElement) == .success,
+              let focusedCF = focusedElement else { return false }
+        let element = focusedCF as! AXUIElement
         
         var value: CFTypeRef?
         guard AXUIElementCopyAttributeValue(element, kAXValueAttribute as CFString, &value) == .success,
@@ -42,7 +43,7 @@ final class TextInjector {
         guard AXUIElementSetAttributeValue(element, kAXValueAttribute as CFString, newValue as CFTypeRef) == .success else { return false }
         
         var range = CFRange(location: context.count + text.count, length: 0)
-        let axRange = AXValueCreate(.cfRange, &range)!
+        guard let axRange = AXValueCreate(.cfRange, &range) else { return true }
         AXUIElementSetAttributeValue(element, kAXSelectedTextRangeAttribute as CFString, axRange)
         return true
     }
