@@ -23,7 +23,7 @@ Der aktuelle Implementierungszweig ist `swift-migration-pr`; `main` kann zeitwei
 - Phase 2: `AudioRecorder`, `HotkeyManager` und `OverlayLevelMapper` implementiert.
 - Phase 3: WhisperKit-Transcriber, Modell-Cache/-Download und `VocabLearner` implementiert.
 - Phase 5: `CursorContext`, `TextInjector` und `TextDelivery` (native AX API) implementiert.
-- Phase 6: `MenuBarController`, `OverlayWindow`, `HistoryWindow` und `PipelineCoordinator` implementiert; Runtime-Fixes für Overlay-Anzeige, Modell-Alias-Mapping, Mikrofon-Vorbereitung und sichtbaren Recording-Status ergänzt.
+- Phase 6: `MenuBarController`, `OverlayWindow`, `HistoryWindow` und `PipelineCoordinator` implementiert; Runtime-Fixes für Overlay-Anzeige, Modell-Alias-Mapping, Mikrofon-Start erst beim Recording und sichtbaren Recording-Status ergänzt.
 - Noch offen: echter Mikrofon-zu-Whisper-End-to-End-Test, XCTest-Target, Phase 7.
 
 ### Tech-Stack
