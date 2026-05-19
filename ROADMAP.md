@@ -22,7 +22,8 @@ Der aktuelle Implementierungszweig ist `swift-migration-pr`; `main` kann zeitwei
 - Phase 1: Foundation, Settings, Logging und App-Skeleton implementiert.
 - Phase 2: `AudioRecorder`, `HotkeyManager` und `OverlayLevelMapper` implementiert.
 - Phase 3: WhisperKit-Transcriber, Modell-Cache/-Download und `VocabLearner` implementiert.
-- Noch offen: echter Mikrofon-zu-Whisper-End-to-End-Test, XCTest-Target, Phase 4–7.
+- Phase 5: `CursorContext`, `TextInjector` und `TextDelivery` (native AX API) implementiert.
+- Noch offen: echter Mikrofon-zu-Whisper-End-to-End-Test, XCTest-Target, Phase 4, 6 und 7.
 
 ### Tech-Stack
 

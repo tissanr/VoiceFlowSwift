@@ -19,7 +19,10 @@ enum TranscriptionProfile: String, Codable {
 }
 
 enum TextOutputMode: String, Codable {
-    case typing, paste
+    case automatic
+    case typing
+    case paste
+    case clipboardOnly
 }
 
 // MARK: - AppSettings
