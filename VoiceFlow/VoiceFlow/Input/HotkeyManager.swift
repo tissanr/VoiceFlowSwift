@@ -31,7 +31,6 @@ final class HotkeyManager {
 
     func start() {
         guard eventTap == nil, pollTimer == nil else { return }
-        requestInputMonitoringPermissionIfNeeded()
 
         if createEventTap(openSettingsOnFailure: true) {
             print("[HotkeyManager] CGEventTap erstellt — lausche auf Fn+Shift")

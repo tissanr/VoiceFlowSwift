@@ -51,10 +51,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             NSApp.terminate(nil)
         }
         
-        // 4. Accessibility-Zugriff anfragen (für Text-Injektion via CGEvent/AX)
-        let axOptions = [kAXTrustedCheckOptionPrompt.takeUnretainedValue(): true] as CFDictionary
-        let trusted = AXIsProcessTrustedWithOptions(axOptions)
-        if !trusted {
+        // 4. Accessibility-Zugriff prüfen (kein Popup — nur loggen; User ist bereits autorisiert)
+        if !AXIsProcessTrusted() {
             print("⚠️  Bedienungshilfen-Zugriff nicht gewährt — Text-Injektion nicht verfügbar")
         }
 
