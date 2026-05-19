@@ -1,0 +1,47 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Xcode — user-specific state (never shared)
+xcuserdata/
+*.xcuserstate
+*.xcscheme
+
+# Xcode — build output
+DerivedData/
+build/
+*.o
+*.d
+
+# Xcode — legacy / less common user files
+*.pbxuser
+*.mode1v3
+*.mode2v3
+*.perspectivev3
+*.moved-aside
+*.xccheckout
+*.xcscmblueprint
+
+# Swift Package Manager
+.build/
+.swiftpm/
+*.resolved
+
+# CocoaPods (not used here, but standard)
+Pods/
+Podfile.lock
+
+# Carthage (not used here, but standard)
+Carthage/Build/
+
+# Credentials / secrets
+*.env
+*.pem
+*.p12
+*.cer
+
+# Editor
+.idea/
+*.swp
+*~
