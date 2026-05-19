@@ -1,6 +1,6 @@
 # VoiceFlow – Roadmap & Entwicklungsdokumentation
 
-> **Letzte Aktualisierung:** 2026-05-19 (Swift Hotkey-Permission-Fix)
+> **Letzte Aktualisierung:** 2026-05-19 (Swift Phase 6 Runtime-Fixes)
 > **Maintainer:** Eduard Munt
 > **Zweck:** Nachvollziehbare Entwicklungsgeschichte, aktueller Stand, offene Punkte
 
@@ -23,7 +23,8 @@ Der aktuelle Implementierungszweig ist `swift-migration-pr`; `main` kann zeitwei
 - Phase 2: `AudioRecorder`, `HotkeyManager` und `OverlayLevelMapper` implementiert.
 - Phase 3: WhisperKit-Transcriber, Modell-Cache/-Download und `VocabLearner` implementiert.
 - Phase 5: `CursorContext`, `TextInjector` und `TextDelivery` (native AX API) implementiert.
-- Noch offen: echter Mikrofon-zu-Whisper-End-to-End-Test, XCTest-Target, Phase 4, 6 und 7.
+- Phase 6: `MenuBarController`, `OverlayWindow`, `HistoryWindow` und `PipelineCoordinator` implementiert; Runtime-Fixes für Overlay-Anzeige, Modell-Alias-Mapping, Mikrofon-Start erst beim Recording und sichtbaren Recording-Status ergänzt.
+- Noch offen: echter Mikrofon-zu-Whisper-End-to-End-Test, XCTest-Target, Phase 7.
 
 ### Tech-Stack
 
@@ -87,26 +88,6 @@ Hotkey losgelassen
 ---
 
 ## Abgeschlossen
-
-### 2026-05-19 — Fix: Swift-Hotkey nach macOS-Input-Monitoring-Freigabe aktivieren
-
-**Problem:** Beim ersten Start konnte `Fn + Shift` wirkungslos bleiben, nachdem macOS Input Monitoring angefragt hatte. Die App fiel nach einem fehlgeschlagenen `CGEventTapCreate` auf Polling zurück, versuchte den Event-Tap nach der Freigabe aber erst nach einem Neustart erneut.
-
-**Lösung:**
-
-- `HotkeyManager` fragt Input Monitoring über `CGRequestListenEventAccess()` an und öffnet die Systemeinstellung nur einmal.
-- `CGEventTap` wird auf demselben dedizierten Thread erstellt, aktiviert und in dessen `CFRunLoop` betrieben.
-- Nach einem fehlgeschlagenen Event-Tap läuft ein Retry-Timer, der den Tap nach Berechtigungsfreigabe automatisch erstellt.
-- Der Event-Tap lauscht zusätzlich auf `keyDown`/`keyUp` und reaktiviert sich nach macOS-Timeouts.
-- Beim Beenden wird der Hotkey-Manager sauber gestoppt.
-
-**Tests:** `xcodebuild build -project VoiceFlow/VoiceFlow.xcodeproj -scheme VoiceFlow -configuration Debug` → erfolgreich.
-
-**Geänderte Dateien:**
-
-- `VoiceFlow/VoiceFlow/Input/HotkeyManager.swift`
-- `VoiceFlow/VoiceFlow/AppDelegate.swift`
-- `ROADMAP.md`
 
 ### 2026-05-12 — Distribution: Homebrew-Tap vorbereitet
 

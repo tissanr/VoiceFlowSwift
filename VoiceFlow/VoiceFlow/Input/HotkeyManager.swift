@@ -135,25 +135,10 @@ final class HotkeyManager {
         let flags = event.flags
         // Fn-Bit 0x800000 ist undokumentiert (NX_DEVICELFNKEYMASK); auf Sequoia verifiziert.
         let fnBit = CGEventFlags(rawValue: 0x0080_0000)
-        let keyCode = event.getIntegerValueField(.keyboardEventKeycode)
-
         if type == .flagsChanged {
-            let flagFn = flags.contains(fnBit)
-            let flagShift = flags.contains(.maskShift)
-
-            if keyCode == Int64(KeyCode.fn) {
-                fnDown = flagFn || !fnDown
-            } else {
-                fnDown = flagFn || fnDown
-            }
-
-            shiftDown = flagShift
-            print("[HotkeyManager] flagsChanged raw=0x\(String(flags.rawValue, radix: 16)) key=\(keyCode) fn=\(fnDown) shift=\(shiftDown)")
-        } else if type == .keyDown || type == .keyUp {
-            if keyCode == Int64(KeyCode.fn) {
-                fnDown = type == .keyDown
-            }
+            fnDown = flags.contains(fnBit)
             shiftDown = flags.contains(.maskShift)
+            print("[HotkeyManager] flagsChanged raw=0x\(String(flags.rawValue, radix: 16)) fn=\(fnDown) shift=\(shiftDown)")
         }
 
         updateRecordingState()

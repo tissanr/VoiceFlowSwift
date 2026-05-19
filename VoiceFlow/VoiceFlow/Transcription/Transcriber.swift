@@ -72,13 +72,20 @@ actor Transcriber {
 
     private func loadWhisperKit() async throws -> WhisperKit {
         if let whisperKit { return whisperKit }
+        // If already cached, pass modelFolder so WhisperKit loads from disk
+        // without any network round-trip.
+        let cached = ModelManager.isCached(modelName: modelVariant)
+        let modelFolder: String? = cached
+            ? ModelManager.whisperModelDir(variant: modelVariant).path
+            : nil
         let config = WhisperKitConfig(
             model: modelVariant,
             downloadBase: ModelManager.huggingFaceCacheRoot,
+            modelFolder: modelFolder,
             verbose: false,
             prewarm: true,
             load: true,
-            download: true
+            download: !cached
         )
         let loaded = try await WhisperKit(config)
         whisperKit = loaded

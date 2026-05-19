@@ -39,7 +39,7 @@ struct AppSettings: Codable {
     var debugTraceEnabled: Bool = false
     var enhancementLevel: EnhancementLevel = .minimal
     var enhancementStyle: EnhancementStyle = .standard
-    var textOutputMode: TextOutputMode = .typing
+    var textOutputMode: TextOutputMode = .automatic
     var llmRuntime: LLMRuntime = .ollama
     var mlxModelSize: String = "1.5b"
     var ollamaBaseURL: String = "http://localhost:11434"
