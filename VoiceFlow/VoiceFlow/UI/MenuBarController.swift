@@ -89,14 +89,19 @@ final class MenuBarController: NSObject {
         guard let button = statusItem.button else { return }
         switch status {
         case .idle:
+            button.title = ""
             button.image = NSImage(systemSymbolName: "waveform", accessibilityDescription: "Bereit")
         case .recording:
-            button.image = NSImage(systemSymbolName: "record.circle", accessibilityDescription: "Aufnahme...")
+            button.title = "REC"
+            button.image = NSImage(systemSymbolName: "record.circle.fill", accessibilityDescription: "Aufnahme...")
         case .processing, .stopping:
+            button.title = ""
             button.image = NSImage(systemSymbolName: "ellipsis.circle", accessibilityDescription: "Verarbeitung...")
         case .error:
+            button.title = ""
             button.image = NSImage(systemSymbolName: "exclamationmark.triangle", accessibilityDescription: "Fehler")
         default:
+            button.title = ""
             button.image = NSImage(systemSymbolName: "waveform", accessibilityDescription: "VoiceFlow")
         }
         button.image?.isTemplate = true

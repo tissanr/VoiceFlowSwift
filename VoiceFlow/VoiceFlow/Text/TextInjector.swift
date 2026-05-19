@@ -5,8 +5,12 @@ import Quartz
 
 /// Phase 5 — Text-Injektion via CGEventPost / AX API
 final class TextInjector {
+    static var canControlUI: Bool {
+        AXIsProcessTrusted()
+    }
 
     static func typeText(_ text: String) async -> Bool {
+        guard canControlUI else { return false }
         guard let source = CGEventSource(stateID: .combinedSessionState) else { return false }
         for scalar in text.unicodeScalars {
             let keyCode: CGKeyCode = (scalar.value == 0x0A || scalar.value == 0x0D) ? 36 : 0
@@ -26,6 +30,7 @@ final class TextInjector {
     }
 
     static func insertDirect(_ text: String, context: String) -> Bool {
+        guard canControlUI else { return false }
         let systemWide = AXUIElementCreateSystemWide()
         var focusedElement: CFTypeRef?
         guard AXUIElementCopyAttributeValue(systemWide, kAXFocusedUIElementAttribute as CFString, &focusedElement) == .success,
@@ -53,6 +58,7 @@ final class TextInjector {
     }
 
     static func triggerPaste() -> Bool {
+        guard canControlUI else { return false }
         let source = CGEventSource(stateID: .combinedSessionState)
         guard let keyDown = CGEvent(keyboardEventSource: source, virtualKey: 9, keyDown: true),
               let keyUp = CGEvent(keyboardEventSource: source, virtualKey: 9, keyDown: false) else { return false }

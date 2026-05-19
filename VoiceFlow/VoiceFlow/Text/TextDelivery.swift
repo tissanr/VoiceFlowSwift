@@ -40,7 +40,9 @@ final class TextDelivery {
 
         let bundleID = NSWorkspace.shared.frontmostApplication?.bundleIdentifier ?? ""
         switch outputMode {
-        case .typing: return await TextInjector.typeText(processedText) ? .success : .failure("Typing failed")
+        case .typing:
+            guard TextInjector.canControlUI else { return .failure("Bedienungshilfen-Zugriff fehlt") }
+            return await TextInjector.typeText(processedText) ? .success : .failure("Typing failed")
         case .paste: return await pasteDelivery(processedText)
         case .clipboardOnly: await TextInjector.copyToClipboard(processedText); return .success
         case .automatic:

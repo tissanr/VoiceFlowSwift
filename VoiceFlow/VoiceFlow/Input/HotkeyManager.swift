@@ -100,7 +100,6 @@ final class HotkeyManager {
         if type == .flagsChanged {
             let newFn = flags.contains(fnBit)
             let newShift = flags.contains(.maskShift)
-            print("[HotkeyManager] flagsChanged raw=0x\(String(flags.rawValue, radix: 16)) fn=\(newFn) shift=\(newShift)")
             fnDown = newFn
             shiftDown = newShift
         }

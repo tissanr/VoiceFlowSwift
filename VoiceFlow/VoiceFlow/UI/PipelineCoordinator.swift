@@ -28,6 +28,7 @@ final class PipelineCoordinator {
         
         // 2. Aufnahme starten
         do {
+            try await recorder.prepare()
             try await recorder.start()
             state.status = .recording
             
@@ -115,6 +116,14 @@ final class PipelineCoordinator {
     }
     
     func warmup() async {
+        do {
+            state.status = .initializing(progress: 0.05)
+            try await recorder.prepare()
+        } catch {
+            state.status = .error("Mikrofon konnte nicht vorbereitet werden: \(error.localizedDescription)")
+            return
+        }
+
         let variant = ModelManager.defaultWhisperVariant
         if ModelManager.isCached(modelName: variant) {
             state.status = .initializing(progress: 0.1)

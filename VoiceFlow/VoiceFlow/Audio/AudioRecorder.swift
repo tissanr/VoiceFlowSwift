@@ -10,6 +10,7 @@ actor AudioRecorder {
     private let engine = AVAudioEngine()
     private let captureState = AudioCaptureState()
     private var converter: AVAudioConverter?
+    private var isPrepared = false
     private var isRecording = false
 
     var currentRMS: Float { captureState.currentRMS }
@@ -26,6 +27,8 @@ actor AudioRecorder {
 
     /// Einmalig beim App-Start aufrufen — hält Engine warm.
     func prepare() async throws {
+        guard !isPrepared else { return }
+
         try await requestMicrophonePermission()
         let inputNode = engine.inputNode
         let inputFormat = inputNode.outputFormat(forBus: 0)
@@ -38,6 +41,7 @@ actor AudioRecorder {
         inputNode.installTap(onBus: 0, bufferSize: 4096, format: inputFormat) { _, _ in }
         try engine.start()
         inputNode.removeTap(onBus: 0)
+        isPrepared = true
     }
 
     // MARK: - Recording
